@@ -26,9 +26,14 @@ export default function EventsScreen() {
     applicationStatus: 'all',
   });
   const [showFilters, setShowFilters] = useState(false);
-  const [keyword, setKeyword] = useState('');
-  const [selectedYear, setSelectedYear] = useState<number | undefined>();
-  const [selectedMonth, setSelectedMonth] = useState<number | undefined>();
+  // フィルターモーダル内の一時的な状態
+  const [tempFilters, setTempFilters] = useState<EventFilters>({
+    includePast: false,
+    applicationStatus: 'all',
+  });
+  const [tempKeyword, setTempKeyword] = useState('');
+  const [tempSelectedYear, setTempSelectedYear] = useState<number | undefined>();
+  const [tempSelectedMonth, setTempSelectedMonth] = useState<number | undefined>();
 
   // カレンダー用の状態
   const [calendarMonth, setCalendarMonth] = useState(new Date());
@@ -45,15 +50,37 @@ export default function EventsScreen() {
     setRefreshing(false);
   }, [refetch]);
 
+  // フィルターモーダルを開くときに現在のフィルターを一時状態にコピー
+  const openFilters = () => {
+    setTempFilters({
+      includePast: filters.includePast || false,
+      applicationStatus: filters.applicationStatus || 'all',
+    });
+    setTempKeyword(filters.keyword || '');
+    setTempSelectedYear(filters.year);
+    setTempSelectedMonth(filters.month);
+    setShowFilters(true);
+  };
+
   const applyFilters = () => {
     setFilters({
-      includePast: filters.includePast,
-      applicationStatus: filters.applicationStatus,
-      year: selectedYear,
-      month: selectedMonth,
-      keyword: keyword.trim() || undefined,
+      includePast: tempFilters.includePast,
+      applicationStatus: tempFilters.applicationStatus,
+      year: tempSelectedYear,
+      month: tempSelectedMonth,
+      keyword: tempKeyword.trim() || undefined,
     });
     setShowFilters(false);
+  };
+
+  const resetFilters = () => {
+    setTempFilters({
+      includePast: false,
+      applicationStatus: 'all',
+    });
+    setTempKeyword('');
+    setTempSelectedYear(undefined);
+    setTempSelectedMonth(undefined);
   };
 
   const formatDate = (dateString: string) => {
@@ -497,7 +524,7 @@ export default function EventsScreen() {
       <View style={styles.filterBar}>
         <TouchableOpacity
           style={styles.filterButton}
-          onPress={() => setShowFilters(true)}
+          onPress={openFilters}
         >
           <Ionicons name="filter" size={20} color="#243266" />
           <Text style={styles.filterButtonText}>フィルター</Text>
@@ -537,9 +564,9 @@ export default function EventsScreen() {
               <View style={styles.filterRow}>
                 <Text style={styles.filterLabel}>過去のイベントも表示</Text>
                 <Switch
-                  value={filters.includePast || false}
+                  value={tempFilters.includePast || false}
                   onValueChange={(value) =>
-                    setFilters({ ...filters, includePast: value })
+                    setTempFilters({ ...tempFilters, includePast: value })
                   }
                   trackColor={{ false: '#e0e0e0', true: '#243266' }}
                 />
@@ -558,8 +585,8 @@ export default function EventsScreen() {
                       key={option.value}
                       style={styles.radioOption}
                       onPress={() =>
-                        setFilters({
-                          ...filters,
+                        setTempFilters({
+                          ...tempFilters,
                           applicationStatus: option.value as any,
                         })
                       }
@@ -567,11 +594,11 @@ export default function EventsScreen() {
                       <View
                         style={[
                           styles.radioCircle,
-                          filters.applicationStatus === option.value &&
+                          tempFilters.applicationStatus === option.value &&
                             styles.radioCircleSelected,
                         ]}
                       >
-                        {filters.applicationStatus === option.value && (
+                        {tempFilters.applicationStatus === option.value && (
                           <View style={styles.radioInner} />
                         )}
                       </View>
@@ -593,18 +620,18 @@ export default function EventsScreen() {
                           key={year}
                           style={[
                             styles.pickerOption,
-                            selectedYear === year && styles.pickerOptionSelected,
+                            tempSelectedYear === year && styles.pickerOptionSelected,
                           ]}
                           onPress={() =>
-                            setSelectedYear(
-                              selectedYear === year ? undefined : year
+                            setTempSelectedYear(
+                              tempSelectedYear === year ? undefined : year
                             )
                           }
                         >
                           <Text
                             style={[
                               styles.pickerOptionText,
-                              selectedYear === year &&
+                              tempSelectedYear === year &&
                                 styles.pickerOptionTextSelected,
                             ]}
                           >
@@ -622,19 +649,19 @@ export default function EventsScreen() {
                           key={month}
                           style={[
                             styles.pickerOption,
-                            selectedMonth === month &&
+                            tempSelectedMonth === month &&
                               styles.pickerOptionSelected,
                           ]}
                           onPress={() =>
-                            setSelectedMonth(
-                              selectedMonth === month ? undefined : month
+                            setTempSelectedMonth(
+                              tempSelectedMonth === month ? undefined : month
                             )
                           }
                         >
                           <Text
                             style={[
                               styles.pickerOptionText,
-                              selectedMonth === month &&
+                              tempSelectedMonth === month &&
                                 styles.pickerOptionTextSelected,
                             ]}
                           >
@@ -653,8 +680,8 @@ export default function EventsScreen() {
                 <TextInput
                   style={styles.searchInput}
                   placeholder="タイトル・場所で検索"
-                  value={keyword}
-                  onChangeText={setKeyword}
+                  value={tempKeyword}
+                  onChangeText={setTempKeyword}
                   placeholderTextColor="#999"
                 />
               </View>
@@ -663,12 +690,7 @@ export default function EventsScreen() {
             <View style={styles.modalFooter}>
               <TouchableOpacity
                 style={styles.resetButton}
-                onPress={() => {
-                  setFilters({ includePast: false, applicationStatus: 'all' });
-                  setKeyword('');
-                  setSelectedYear(undefined);
-                  setSelectedMonth(undefined);
-                }}
+                onPress={resetFilters}
               >
                 <Text style={styles.resetButtonText}>リセット</Text>
               </TouchableOpacity>
