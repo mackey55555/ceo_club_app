@@ -36,6 +36,9 @@ export default function TabsLayout() {
     if (lastSegment === 'history') {
       return '参加履歴';
     }
+    if (lastSegment === 'reports') {
+      return 'イベント報告記';
+    }
     if (lastSegment === 'member') {
       return '会員証';
     }
@@ -51,6 +54,7 @@ export default function TabsLayout() {
         <Stack.Screen name="news" options={{ headerShown: false }} />
         <Stack.Screen name="events" options={{ headerShown: false }} />
         <Stack.Screen name="history" options={{ headerShown: false }} />
+        <Stack.Screen name="reports" options={{ headerShown: false }} />
         <Stack.Screen name="member" options={{ headerShown: false }} />
         <Stack.Screen name="news/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="events/[id]" options={{ headerShown: false }} />

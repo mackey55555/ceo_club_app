@@ -178,3 +178,98 @@ BEGIN
     END IF;
 END $$;
 
+-- 参加履歴のテストデータ（指定ユーザーが既存イベントに申し込む）
+DO $$
+DECLARE
+    target_user_id UUID := '673de11c-259b-46e0-b6eb-5ea7413ca220';
+    event1_id UUID;
+    event2_id UUID;
+    event3_id UUID;
+    event4_id UUID;
+BEGIN
+    -- 公開済みのイベントを取得（未来のイベント）
+    SELECT id INTO event1_id FROM events 
+    WHERE status_id = '00000000-0000-0000-0000-000000000202' 
+    AND event_date >= CURRENT_DATE
+    ORDER BY event_date ASC
+    LIMIT 1;
+
+    -- 2つ目のイベント
+    SELECT id INTO event2_id FROM events 
+    WHERE status_id = '00000000-0000-0000-0000-000000000202' 
+    AND event_date >= CURRENT_DATE
+    ORDER BY event_date ASC
+    OFFSET 1
+    LIMIT 1;
+
+    -- 3つ目のイベント
+    SELECT id INTO event3_id FROM events 
+    WHERE status_id = '00000000-0000-0000-0000-000000000202' 
+    AND event_date >= CURRENT_DATE
+    ORDER BY event_date ASC
+    OFFSET 2
+    LIMIT 1;
+
+    -- 過去のイベント（1つ）
+    SELECT id INTO event4_id FROM events 
+    WHERE status_id = '00000000-0000-0000-0000-000000000202' 
+    AND event_date < CURRENT_DATE
+    ORDER BY event_date DESC
+    LIMIT 1;
+
+    -- ユーザーが存在する場合のみ申込みデータを作成
+    IF EXISTS (SELECT 1 FROM users WHERE id = target_user_id) THEN
+        -- 未来のイベント1に申し込み
+        IF event1_id IS NOT NULL THEN
+            INSERT INTO event_applications (id, event_id, user_id, status, applied_at)
+            VALUES (
+                gen_random_uuid(),
+                event1_id,
+                target_user_id,
+                'applied',
+                NOW() - INTERVAL '5 days'
+            )
+            ON CONFLICT (event_id, user_id) DO NOTHING;
+        END IF;
+
+        -- 未来のイベント2に申し込み
+        IF event2_id IS NOT NULL THEN
+            INSERT INTO event_applications (id, event_id, user_id, status, applied_at)
+            VALUES (
+                gen_random_uuid(),
+                event2_id,
+                target_user_id,
+                'applied',
+                NOW() - INTERVAL '3 days'
+            )
+            ON CONFLICT (event_id, user_id) DO NOTHING;
+        END IF;
+
+        -- 未来のイベント3に申し込み
+        IF event3_id IS NOT NULL THEN
+            INSERT INTO event_applications (id, event_id, user_id, status, applied_at)
+            VALUES (
+                gen_random_uuid(),
+                event3_id,
+                target_user_id,
+                'applied',
+                NOW() - INTERVAL '1 day'
+            )
+            ON CONFLICT (event_id, user_id) DO NOTHING;
+        END IF;
+
+        -- 過去のイベントに申し込み（参加済み）
+        IF event4_id IS NOT NULL THEN
+            INSERT INTO event_applications (id, event_id, user_id, status, applied_at)
+            VALUES (
+                gen_random_uuid(),
+                event4_id,
+                target_user_id,
+                'applied',
+                NOW() - INTERVAL '20 days'
+            )
+            ON CONFLICT (event_id, user_id) DO NOTHING;
+        END IF;
+    END IF;
+END $$;
+

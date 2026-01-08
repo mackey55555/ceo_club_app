@@ -65,6 +65,10 @@ export interface Event {
   updated_at: string;
 }
 
+export interface EventWithApplication extends Event {
+  hasApplied?: boolean;
+}
+
 export interface EventApplication {
   id: string;
   event_id: string;
