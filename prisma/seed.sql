@@ -273,3 +273,15 @@ BEGIN
     END IF;
 END $$;
 
+-- 管理者のテストデータ
+-- 注意: パスワードは "admin123" です（現在のログイン実装ではパスワード検証が実装されていないため、任意の文字列でも動作します）
+INSERT INTO administrators (id, email, password_hash, name, is_active)
+VALUES (
+    '00000000-0000-0000-0000-000000000001',
+    'admin@example.com',
+    '$2a$10$placeholder_hash_for_testing', -- テスト用のプレースホルダー（実際の検証は未実装）
+    '管理者',
+    true
+)
+ON CONFLICT (email) DO NOTHING;
+

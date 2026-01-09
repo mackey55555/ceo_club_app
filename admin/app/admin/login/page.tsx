@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -20,27 +19,23 @@ export default function AdminLoginPage() {
 
     setLoading(true);
     try {
-      // 管理者テーブルから認証情報を確認
-      const { data: admin, error: adminError } = await supabase
-        .from('administrators')
-        .select('*')
-        .eq('email', email)
-        .eq('is_active', true)
-        .single();
+      // APIルートでパスワード検証を実行
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-      if (adminError || !admin) {
-        throw new Error('認証情報が正しくありません');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'ログインに失敗しました');
       }
 
-      // パスワード検証（簡易版 - 本番では適切なハッシュ検証が必要）
-      // 注意: 実際の実装では、Supabase Authを使用するか、適切なパスワードハッシュ検証を実装してください
-      
-      // セッション管理（簡易版）
-      localStorage.setItem('admin_session', JSON.stringify({
-        id: admin.id,
-        email: admin.email,
-        name: admin.name,
-      }));
+      // セッション管理
+      localStorage.setItem('admin_session', JSON.stringify(data.admin));
 
       router.push('/admin');
     } catch (error: any) {
@@ -70,7 +65,7 @@ export default function AdminLoginPage() {
                 name="email"
                 type="email"
                 required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2"
                 style={{ focusRingColor: '#243266' }}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -85,7 +80,7 @@ export default function AdminLoginPage() {
                 name="password"
                 type="password"
                 required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2"
                 style={{ focusRingColor: '#243266' }}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

@@ -1,4 +1,9 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
+import * as dotenv from 'dotenv';
+
+// 環境変数を読み込む
+dotenv.config();
 
 // Prisma 7では、prisma.config.tsから接続情報が自動的に読み込まれます
 // 環境変数DATABASE_URLが設定されていることを確認
@@ -111,7 +116,31 @@ async function main() {
     },
   });
 
+  // 管理者のテストデータ
+  const adminPassword = 'admin123';
+  const hashedPassword = await bcrypt.hash(adminPassword, 10);
+
+  await prisma.administrator.upsert({
+    where: { id: '00000000-0000-0000-0000-000000000001' },
+    update: {
+      email: 'admin@example.com',
+      passwordHash: hashedPassword,
+      name: '管理者',
+      isActive: true,
+    },
+    create: {
+      id: '00000000-0000-0000-0000-000000000001',
+      email: 'admin@example.com',
+      passwordHash: hashedPassword,
+      name: '管理者',
+      isActive: true,
+    },
+  });
+
   console.log('✅ シードデータの投入が完了しました');
+  console.log('📧 管理者ログイン情報:');
+  console.log('   メールアドレス: admin@example.com');
+  console.log('   パスワード: admin123');
 }
 
 main()

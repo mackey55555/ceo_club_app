@@ -69,23 +69,23 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <a
               href="/admin/members"
-              className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+              className="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              <h3 className="font-semibold mb-2">会員管理</h3>
+              <h3 className="font-semibold mb-2 text-gray-900">会員管理</h3>
               <p className="text-sm text-gray-600">会員一覧・承認・編集</p>
             </a>
             <a
               href="/admin/events"
-              className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+              className="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              <h3 className="font-semibold mb-2">イベント管理</h3>
+              <h3 className="font-semibold mb-2 text-gray-900">イベント管理</h3>
               <p className="text-sm text-gray-600">イベント作成・編集・申込み管理</p>
             </a>
             <a
               href="/admin/news"
-              className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+              className="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              <h3 className="font-semibold mb-2">お知らせ管理</h3>
+              <h3 className="font-semibold mb-2 text-gray-900">お知らせ管理</h3>
               <p className="text-sm text-gray-600">お知らせ作成・編集</p>
             </a>
           </div>
