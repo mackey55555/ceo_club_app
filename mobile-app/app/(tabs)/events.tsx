@@ -243,6 +243,7 @@ export default function EventsScreen() {
       : null;
     const dayEvents = dateKey ? eventsByDate[dateKey] || [] : [];
 
+
     return (
       <View style={styles.calendarContainer}>
         <ScrollView
@@ -287,44 +288,44 @@ export default function EventsScreen() {
 
           {/* カレンダーグリッド */}
           <View style={styles.calendarGrid}>
-            <View style={styles.calendarRow}>
-              {calendarDays.map((day, index) => {
-                const dayKey = day.toISOString().split('T')[0];
-                const hasEvents = (eventsByDate[dayKey]?.length || 0) > 0;
-                const isCurrentMonth = day.getMonth() === calendarMonth.getMonth();
-                const isToday =
-                  day.toDateString() === new Date().toDateString();
-                const isSelected =
-                  selectedDate?.toDateString() === day.toDateString();
+              <View style={styles.calendarRow}>
+                {calendarDays.map((day, index) => {
+                  const dayKey = day.toISOString().split('T')[0];
+                  const hasEvents = (eventsByDate[dayKey]?.length || 0) > 0;
+                  const isCurrentMonth = day.getMonth() === calendarMonth.getMonth();
+                  const isToday =
+                    day.toDateString() === new Date().toDateString();
+                  const isSelected =
+                    selectedDate?.toDateString() === day.toDateString();
 
-                return (
-                  <TouchableOpacity
-                    key={index}
-                    style={[
-                      styles.calendarCell,
-                      !isCurrentMonth && styles.calendarCellOtherMonth,
-                      isToday && styles.calendarCellToday,
-                      isSelected && styles.calendarCellSelected,
-                      hasEvents && styles.calendarCellWithEvents,
-                    ]}
-                    onPress={() => setSelectedDate(day)}
-                  >
-                    <Text
+                  return (
+                    <TouchableOpacity
+                      key={index}
                       style={[
-                        styles.calendarDayText,
-                        !isCurrentMonth && styles.calendarDayTextOtherMonth,
-                        isToday && styles.calendarDayTextToday,
-                        isSelected && styles.calendarDayTextSelected,
-                        hasEvents && styles.calendarDayTextWithEvents,
+                        styles.calendarCell,
+                        !isCurrentMonth && styles.calendarCellOtherMonth,
+                        isToday && styles.calendarCellToday,
+                        isSelected && styles.calendarCellSelected,
+                        hasEvents && styles.calendarCellWithEvents,
                       ]}
+                      onPress={() => setSelectedDate(day)}
                     >
-                      {day.getDate()}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+                      <Text
+                        style={[
+                          styles.calendarDayText,
+                          !isCurrentMonth && styles.calendarDayTextOtherMonth,
+                          isToday && styles.calendarDayTextToday,
+                          isSelected && styles.calendarDayTextSelected,
+                          hasEvents && styles.calendarDayTextWithEvents,
+                        ]}
+                      >
+                        {day.getDate()}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </View>
-          </View>
 
           {/* 選択した日のイベント一覧 */}
           {selectedDate && dayEvents.length > 0 && (
@@ -338,10 +339,17 @@ export default function EventsScreen() {
                   style={styles.dayEventItem}
                   onPress={() => handlePress(event)}
                 >
-                  <Text style={styles.dayEventTime}>
-                    {event.start_time && formatTime(event.start_time)}
-                    {event.end_time && ` - ${formatTime(event.end_time)}`}
-                  </Text>
+                  <View style={styles.dayEventHeader}>
+                    <Text style={styles.dayEventTime}>
+                      {event.start_time && formatTime(event.start_time)}
+                      {event.end_time && ` - ${formatTime(event.end_time)}`}
+                    </Text>
+                    {event.hasApplied && (
+                      <View style={styles.appliedBadge}>
+                        <Text style={styles.appliedBadgeText}>申込済</Text>
+                      </View>
+                    )}
+                  </View>
                   <Text style={styles.dayEventTitle}>{event.title}</Text>
                   {event.venue && (
                     <Text style={styles.dayEventVenue}>📍 {event.venue}</Text>
@@ -984,10 +992,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 8,
   },
+  dayEventHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   dayEventTime: {
     fontSize: 12,
     color: '#999',
-    marginBottom: 4,
+    flex: 1,
   },
   dayEventTitle: {
     fontSize: 14,

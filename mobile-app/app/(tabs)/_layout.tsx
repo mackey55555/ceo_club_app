@@ -51,14 +51,62 @@ export default function TabsLayout() {
         <Header title={headerTitle} showBack={isDetailScreen} />
       )}
       <Stack>
-        <Stack.Screen name="news" options={{ headerShown: false }} />
-        <Stack.Screen name="events" options={{ headerShown: false }} />
-        <Stack.Screen name="history" options={{ headerShown: false }} />
-        <Stack.Screen name="reports" options={{ headerShown: false }} />
-        <Stack.Screen name="member" options={{ headerShown: false }} />
-        <Stack.Screen name="news/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="events/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="member/edit" options={{ headerShown: false }} />
+        <Stack.Screen 
+          name="news" 
+          options={{ 
+            headerShown: false,
+            animation: 'none' 
+          }} 
+        />
+        <Stack.Screen 
+          name="events" 
+          options={{ 
+            headerShown: false,
+            animation: 'none' 
+          }} 
+        />
+        <Stack.Screen 
+          name="history" 
+          options={{ 
+            headerShown: false,
+            animation: 'none' 
+          }} 
+        />
+        <Stack.Screen 
+          name="reports" 
+          options={{ 
+            headerShown: false,
+            animation: 'none' 
+          }} 
+        />
+        <Stack.Screen 
+          name="member" 
+          options={{ 
+            headerShown: false,
+            animation: 'none' 
+          }} 
+        />
+        <Stack.Screen 
+          name="news/[id]" 
+          options={{ 
+            headerShown: false,
+            animation: 'default' 
+          }} 
+        />
+        <Stack.Screen 
+          name="events/[id]" 
+          options={{ 
+            headerShown: false,
+            animation: 'default' 
+          }} 
+        />
+        <Stack.Screen 
+          name="member/edit" 
+          options={{ 
+            headerShown: false,
+            animation: 'default' 
+          }} 
+        />
       </Stack>
       {!isDetailScreen && <TabBar />}
     </View>
