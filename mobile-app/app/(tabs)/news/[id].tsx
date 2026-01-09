@@ -6,11 +6,13 @@ import {
   ScrollView,
   ActivityIndicator,
   Image,
+  useWindowDimensions,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { News } from '../../../types';
+import RenderHTML from 'react-native-render-html';
 
 export default function NewsDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -49,29 +51,8 @@ export default function NewsDetailScreen() {
     return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
   };
 
-  const parseBody = (body: string) => {
-    try {
-      // TipTapのJSON形式をパース（簡易版）
-      const parsed = JSON.parse(body);
-      if (parsed.type === 'doc' && parsed.content) {
-        // 簡易的にテキストを抽出
-        const extractText = (node: any): string => {
-          if (node.type === 'text') {
-            return node.text || '';
-          }
-          if (node.content && Array.isArray(node.content)) {
-            return node.content.map(extractText).join('');
-          }
-          return '';
-        };
-        return extractText(parsed);
-      }
-      return body;
-    } catch {
-      // JSONでない場合はそのまま返す
-      return body;
-    }
-  };
+  // HTMLをレンダリングするための設定
+  const { width } = useWindowDimensions();
 
   if (loading) {
     return (
@@ -104,7 +85,23 @@ export default function NewsDetailScreen() {
         <Text style={styles.date}>{formatDate(news.created_at)}</Text>
         <Text style={styles.title}>{news.title}</Text>
         <View style={styles.bodyContainer}>
-          <Text style={styles.body}>{parseBody(news.body)}</Text>
+          <RenderHTML
+            contentWidth={width - 40}
+            source={{ html: news.body || '' }}
+            baseStyle={styles.body}
+            tagsStyles={{
+              h1: { fontSize: 24, fontWeight: 'bold', marginBottom: 12, marginTop: 16 },
+              h2: { fontSize: 20, fontWeight: 'bold', marginBottom: 10, marginTop: 14 },
+              h3: { fontSize: 18, fontWeight: 'bold', marginBottom: 8, marginTop: 12 },
+              p: { fontSize: 16, lineHeight: 24, marginBottom: 12 },
+              ul: { marginBottom: 12, paddingLeft: 20 },
+              ol: { marginBottom: 12, paddingLeft: 20 },
+              li: { fontSize: 16, lineHeight: 24, marginBottom: 4 },
+              strong: { fontWeight: 'bold' },
+              em: { fontStyle: 'italic' },
+              a: { color: '#243266', textDecorationLine: 'underline' },
+            }}
+          />
         </View>
       </View>
     </ScrollView>

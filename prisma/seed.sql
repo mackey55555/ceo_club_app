@@ -21,8 +21,13 @@ INSERT INTO event_statuses (id, name) VALUES
     ('00000000-0000-0000-0000-000000000204', 'cancelled')
 ON CONFLICT (name) DO NOTHING;
 
--- お知らせのテストデータ（テストユーザーが存在する場合のみ）
--- テストユーザーのIDを取得して使用
+-- 既存のテストデータを削除
+DELETE FROM event_applications;
+DELETE FROM guest_applications;
+DELETE FROM events;
+DELETE FROM news;
+
+-- お知らせのテストデータ（HTML形式）
 DO $$
 DECLARE
     test_user_id UUID;
@@ -36,8 +41,8 @@ BEGIN
         INSERT INTO news (id, title, body, thumbnail_url, status_id, publish_at, created_by)
         VALUES (
             gen_random_uuid(),
-            'CEOクラブアプリがリリースされました',
-            '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"CEOクラブイベント管理アプリがリリースされました。今後、イベント情報やお知らせをこちらで配信いたします。"}]}]}',
+            'CEO倶楽部アプリがリリースされました',
+            '<h1>CEO倶楽部アプリがリリースされました</h1><p>CEO倶楽部イベント管理アプリがリリースされました。今後、イベント情報やお知らせをこちらで配信いたします。</p><h2>主な機能</h2><ul><li>イベント情報の確認</li><li>イベントへの申し込み</li><li>お知らせの閲覧</li><li>会員情報の管理</li></ul><p>ご利用いただき、ありがとうございます。</p>',
             'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop',
             '00000000-0000-0000-0000-000000000102', -- published
             NOW(),
@@ -50,7 +55,7 @@ BEGIN
         VALUES (
             gen_random_uuid(),
             '次回イベントのご案内',
-            '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"次回のCEOクラブイベントを開催いたします。詳細はイベントページをご確認ください。"}]}]}',
+            '<h1>次回イベントのご案内</h1><p>次回のCEO倶楽部イベントを開催いたします。詳細はイベントページをご確認ください。</p><h2>開催予定イベント</h2><ol><li>CEO倶楽部新年会 2026</li><li>経営者セミナー「DX推進の最前線」</li><li>CEO倶楽部定例会</li></ol><p><strong>お申し込みはお早めに！</strong></p>',
             'https://images.unsplash.com/photo-1540575467063-178a50c2e87c?w=800&h=600&fit=crop',
             '00000000-0000-0000-0000-000000000102', -- published
             NOW() - INTERVAL '1 day',
@@ -63,7 +68,7 @@ BEGIN
         VALUES (
             gen_random_uuid(),
             'システムメンテナンスのお知らせ',
-            '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"来週、システムメンテナンスを実施いたします。ご不便をおかけいたしますが、よろしくお願いいたします。"}]}]}',
+            '<h1>システムメンテナンスのお知らせ</h1><p>来週、システムメンテナンスを実施いたします。ご不便をおかけいたしますが、よろしくお願いいたします。</p><h2>メンテナンス日時</h2><p><strong>2026年1月15日（月） 2:00 ～ 6:00</strong></p><h3>影響範囲</h3><ul><li>アプリの一時的な利用不可</li><li>イベント申し込み機能の停止</li></ul><p><em>メンテナンス中はご利用いただけませんので、ご注意ください。</em></p>',
             'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=600&fit=crop',
             '00000000-0000-0000-0000-000000000102', -- published
             NOW() - INTERVAL '2 days',
@@ -73,7 +78,7 @@ BEGIN
     END IF;
 END $$;
 
--- イベントのテストデータ（テストユーザーが存在する場合のみ）
+-- イベントのテストデータ（HTML形式）
 DO $$
 DECLARE
     test_user_id UUID;
@@ -91,8 +96,8 @@ BEGIN
         )
         VALUES (
             gen_random_uuid(),
-            'CEOクラブ新年会 2026',
-            '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"新年を迎え、CEOクラブの新年会を開催いたします。会員の皆様との交流の場として、ぜひご参加ください。"}]}]}',
+            'CEO倶楽部新年会 2026',
+            '<h1>CEO倶楽部新年会 2026</h1><p>新年を迎え、CEO倶楽部の新年会を開催いたします。会員の皆様との交流の場として、ぜひご参加ください。</p><h2>開催概要</h2><ul><li>日時: 2026年2月（詳細は後日ご案内）</li><li>場所: 東京・ホテルオークラ</li><li>定員: 100名</li></ul><h2>プログラム</h2><p>新年のご挨拶、会員の皆様との交流、懇親会などを予定しております。</p><p><strong>お申し込みはお早めに！</strong></p>',
             'https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&h=600&fit=crop',
             (NOW() + INTERVAL '30 days')::DATE,
             '18:00:00',
@@ -115,7 +120,7 @@ BEGIN
         VALUES (
             gen_random_uuid(),
             '経営者セミナー「DX推進の最前線」',
-            '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"デジタルトランスフォーメーション（DX）を推進する経営者のためのセミナーです。最新の事例と実践的なノウハウをお伝えします。"}]}]}',
+            '<h1>経営者セミナー「DX推進の最前線」</h1><p>デジタルトランスフォーメーション（DX）を推進する経営者のためのセミナーです。最新の事例と実践的なノウハウをお伝えします。</p><h2>セミナー内容</h2><ol><li>DXの基本概念と重要性</li><li>成功事例の紹介</li><li>実践的なノウハウの共有</li><li>質疑応答・ディスカッション</li></ol><h2>講師プロフィール</h2><p><strong>山田太郎氏</strong><br/>デジタル戦略コンサルタント。大手企業のDX推進を多数支援。</p><p>詳細は<a href="https://example.com">こちら</a>をご覧ください。</p>',
             'https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&h=600&fit=crop',
             (NOW() + INTERVAL '45 days')::DATE,
             '14:00:00',
@@ -137,8 +142,8 @@ BEGIN
         )
         VALUES (
             gen_random_uuid(),
-            'CEOクラブ定例会',
-            '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"定例のCEOクラブ会合です。会員の皆様の情報交換の場として開催いたします。"}]}]}',
+            'CEO倶楽部定例会',
+            '<h1>CEO倶楽部定例会</h1><p>定例のCEO倶楽部会合です。会員の皆様の情報交換の場として開催いたします。</p><h2>議題</h2><ul><li>会員紹介・自己紹介タイム</li><li>ビジネストピックの共有</li><li>今後のイベント企画について</li><li>自由な情報交換・ネットワーキング</li></ul><h3>注意事項</h3><p><em>会員限定のイベントです。事前のご予約をお願いいたします。</em></p>',
             'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&h=600&fit=crop',
             (NOW() + INTERVAL '7 days')::DATE,
             '19:00:00',
@@ -160,8 +165,8 @@ BEGIN
         )
         VALUES (
             gen_random_uuid(),
-            'CEOクラブ忘年会 2025',
-            '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"2025年の忘年会を開催いたしました。多くの会員の皆様にご参加いただき、ありがとうございました。"}]}]}',
+            'CEO倶楽部忘年会 2025',
+            '<h1>CEO倶楽部忘年会 2025</h1><p>2025年の忘年会を開催いたしました。多くの会員の皆様にご参加いただき、ありがとうございました。</p><h2>開催報告</h2><p>本年も多くの会員の皆様にご参加いただき、大変盛況のうちに終了いたしました。</p><ul><li>参加者数: 80名</li><li>会場: 東京・帝国ホテル</li><li>開催日: 2025年12月</li></ul><p>来年も引き続き、皆様と共にCEO倶楽部を盛り上げていきたいと思います。</p>',
             'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&h=600&fit=crop',
             (NOW() - INTERVAL '15 days')::DATE,
             '18:00:00',

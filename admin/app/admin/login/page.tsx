@@ -50,7 +50,7 @@ export default function AdminLoginPage() {
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-md">
         <div>
           <h2 className="text-3xl font-bold text-center" style={{ color: '#243266' }}>
-            CEOクラブ
+            CEO倶楽部
           </h2>
           <p className="mt-2 text-center text-gray-600">管理画面ログイン</p>
         </div>

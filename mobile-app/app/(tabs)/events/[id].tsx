@@ -8,12 +8,14 @@ import {
   Image,
   TouchableOpacity,
   Alert,
+  useWindowDimensions,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { supabase } from '../../../lib/supabase';
 import { Event, EventApplication } from '../../../types';
 import { useAuthStore } from '../../../stores/authStore';
 import * as Crypto from 'expo-crypto';
+import RenderHTML from 'react-native-render-html';
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -156,26 +158,8 @@ export default function EventDetailScreen() {
     return `${hours}:${minutes}`;
   };
 
-  const parseBody = (body: string) => {
-    try {
-      const parsed = JSON.parse(body);
-      if (parsed.type === 'doc' && parsed.content) {
-        const extractText = (node: any): string => {
-          if (node.type === 'text') {
-            return node.text || '';
-          }
-          if (node.content && Array.isArray(node.content)) {
-            return node.content.map(extractText).join('');
-          }
-          return '';
-        };
-        return extractText(parsed);
-      }
-      return body;
-    } catch {
-      return body;
-    }
-  };
+  // HTMLをレンダリングするための設定
+  const { width } = useWindowDimensions();
 
   const canCancel = () => {
     if (!event || !event.cancel_deadline) return false;
@@ -235,7 +219,23 @@ export default function EventDetailScreen() {
         )}
 
         <View style={styles.bodyContainer}>
-          <Text style={styles.body}>{parseBody(event.body)}</Text>
+          <RenderHTML
+            contentWidth={width - 40}
+            source={{ html: event.body || '' }}
+            baseStyle={styles.body}
+            tagsStyles={{
+              h1: { fontSize: 24, fontWeight: 'bold', marginBottom: 12, marginTop: 16 },
+              h2: { fontSize: 20, fontWeight: 'bold', marginBottom: 10, marginTop: 14 },
+              h3: { fontSize: 18, fontWeight: 'bold', marginBottom: 8, marginTop: 12 },
+              p: { fontSize: 16, lineHeight: 24, marginBottom: 12 },
+              ul: { marginBottom: 12, paddingLeft: 20 },
+              ol: { marginBottom: 12, paddingLeft: 20 },
+              li: { fontSize: 16, lineHeight: 24, marginBottom: 4 },
+              strong: { fontWeight: 'bold' },
+              em: { fontStyle: 'italic' },
+              a: { color: '#243266', textDecorationLine: 'underline' },
+            }}
+          />
         </View>
 
         {user && (

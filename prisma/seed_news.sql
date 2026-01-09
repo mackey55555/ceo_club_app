@@ -17,8 +17,8 @@ BEGIN
         INSERT INTO news (id, title, body, status_id, publish_at, created_by)
         VALUES (
             gen_random_uuid(),
-            'CEOクラブアプリがリリースされました',
-            '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"CEOクラブイベント管理アプリがリリースされました。今後、イベント情報やお知らせをこちらで配信いたします。"}]}]}',
+            'CEO倶楽部アプリがリリースされました',
+            '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"CEO倶楽部イベント管理アプリがリリースされました。今後、イベント情報やお知らせをこちらで配信いたします。"}]}]}',
             '00000000-0000-0000-0000-000000000102', -- published
             NOW(),
             test_user_id
@@ -30,7 +30,7 @@ BEGIN
         VALUES (
             gen_random_uuid(),
             '次回イベントのご案内',
-            '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"次回のCEOクラブイベントを開催いたします。詳細はイベントページをご確認ください。"}]}]}',
+            '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"次回のCEO倶楽部イベントを開催いたします。詳細はイベントページをご確認ください。"}]}]}',
             '00000000-0000-0000-0000-000000000102', -- published
             NOW() - INTERVAL '1 day',
             test_user_id

@@ -4,11 +4,14 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import RichTextEditor from '@/components/RichTextEditor';
+import ImageUpload from '@/components/ImageUpload';
 
 export default function NewEventPage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [statuses, setStatuses] = useState<{ id: string; name: string }[]>([]);
+  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [formData, setFormData] = useState({
     title: '',
     body: '',
@@ -72,7 +75,8 @@ export default function NewEventPage() {
         event_date: formData.event_date,
         status_id: formData.status_id,
         allow_guest: formData.allow_guest,
-        created_by: admin.id,
+        // 管理者はusersテーブルに存在しないため、created_byはNULLにする
+        // created_by: admin.id,
       };
 
       if (formData.thumbnail_url) {
@@ -136,6 +140,18 @@ export default function NewEventPage() {
     }
   };
 
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+  };
+
+  const formatDateTime = (dateString: string | null | undefined) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow" style={{ backgroundColor: '#243266' }}>
@@ -154,56 +170,93 @@ export default function NewEventPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6">
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                タイトル <span className="text-gray-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                style={{ focusRingColor: '#243266' }}
-              />
-            </div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* 左側: 編集フォーム */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-bold" style={{ color: '#243266' }}>
+                  編集
+                </h2>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('edit')}
+                    className={`px-3 py-1 rounded text-sm ${
+                      viewMode === 'edit'
+                        ? 'bg-gray-800 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    編集
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('preview')}
+                    className={`px-3 py-1 rounded text-sm ${
+                      viewMode === 'preview'
+                        ? 'bg-gray-800 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    プレビュー
+                  </button>
+                </div>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                本文 <span className="text-gray-500">*</span>
-              </label>
-              <textarea
-                required
-                rows={15}
-                value={formData.body}
-                onChange={(e) =>
-                  setFormData({ ...formData, body: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                style={{ focusRingColor: '#243266' }}
-              />
-            </div>
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    タイトル <span className="text-gray-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.title}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                    style={{ focusRingColor: '#243266' }}
+                  />
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                サムネイルURL
-              </label>
-              <input
-                type="url"
-                value={formData.thumbnail_url}
-                onChange={(e) =>
-                  setFormData({ ...formData, thumbnail_url: e.target.value })
-                }
-                placeholder="https://example.com/image.jpg"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                style={{ focusRingColor: '#243266' }}
-              />
-            </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    本文 <span className="text-gray-500">*</span>
+                  </label>
+                  {viewMode === 'edit' ? (
+                    <RichTextEditor
+                      content={formData.body}
+                      onChange={(content) =>
+                        setFormData({ ...formData, body: content })
+                      }
+                      placeholder="本文を入力してください..."
+                    />
+                  ) : (
+                    <div
+                      className="border border-gray-300 rounded-md p-4 min-h-[300px] bg-white prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: formData.body || '<p class="text-gray-400">プレビューが表示されます</p>' }}
+                    />
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    サムネイル画像
+                  </label>
+                  <ImageUpload
+                    currentUrl={formData.thumbnail_url}
+                    onUploadComplete={(url) =>
+                      setFormData({ ...formData, thumbnail_url: url })
+                    }
+                    bucketName="thumbnails"
+                    folder="events"
+                    bucketName="thumbnails"
+                    folder="events"
+                  />
+                </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -358,21 +411,78 @@ export default function NewEventPage() {
               </label>
             </div>
 
-            <div className="flex gap-4">
-              <button
-                type="submit"
-                disabled={saving}
-                className="px-6 py-2 text-white rounded hover:opacity-90 disabled:opacity-50"
-                style={{ backgroundColor: '#243266' }}
-              >
-                {saving ? '作成中...' : '作成'}
-              </button>
-              <Link
-                href="/admin/events"
-                className="px-6 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
-              >
-                キャンセル
-              </Link>
+                <div className="flex gap-4 pt-4 border-t">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="px-6 py-2 text-white rounded hover:opacity-90 disabled:opacity-50"
+                    style={{ backgroundColor: '#243266' }}
+                  >
+                    {saving ? '作成中...' : '作成'}
+                  </button>
+                  <Link
+                    href="/admin/events"
+                    className="px-6 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+                  >
+                    キャンセル
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* 右側: プレビュー */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-bold mb-4" style={{ color: '#243266' }}>
+                プレビュー
+              </h2>
+              <div className="border border-gray-300 rounded-md p-6 bg-gray-50">
+                {formData.thumbnail_url && (
+                  <img
+                    src={formData.thumbnail_url}
+                    alt={formData.title || 'サムネイル'}
+                    className="w-full h-auto rounded mb-4"
+                  />
+                )}
+                <h1 className="text-2xl font-bold mb-4 text-gray-900">
+                  {formData.title || 'タイトルが表示されます'}
+                </h1>
+                <div
+                  className="prose prose-sm max-w-none text-gray-700"
+                  dangerouslySetInnerHTML={{
+                    __html: formData.body || '<p class="text-gray-400">本文が表示されます</p>',
+                  }}
+                />
+                <div className="mt-4 space-y-2 text-sm text-gray-600">
+                  <div>
+                    <strong>開催日:</strong> {formData.event_date ? formatDate(formData.event_date) : '-'}
+                  </div>
+                  {formData.start_time && (
+                    <div>
+                      <strong>開始時刻:</strong> {formData.start_time}
+                    </div>
+                  )}
+                  {formData.end_time && (
+                    <div>
+                      <strong>終了時刻:</strong> {formData.end_time}
+                    </div>
+                  )}
+                  {formData.venue && (
+                    <div>
+                      <strong>開催場所:</strong> {formData.venue}
+                    </div>
+                  )}
+                  {formData.capacity && (
+                    <div>
+                      <strong>定員:</strong> {formData.capacity}人
+                    </div>
+                  )}
+                  {formData.publish_at && (
+                    <div>
+                      <strong>公開日時:</strong> {formatDateTime(formData.publish_at)}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </form>

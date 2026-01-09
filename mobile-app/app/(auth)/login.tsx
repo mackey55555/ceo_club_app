@@ -54,7 +54,7 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>CEOクラブ</Text>
+        <Text style={styles.title}>CEO倶楽部</Text>
         <Text style={styles.subtitle}>ログイン</Text>
 
         <View style={styles.form}>
