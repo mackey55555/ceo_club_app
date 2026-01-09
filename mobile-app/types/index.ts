@@ -65,9 +65,6 @@ export interface Event {
   updated_at: string;
 }
 
-export interface EventWithApplication extends Event {
-  hasApplied?: boolean;
-}
 
 export interface EventApplication {
   id: string;
@@ -88,5 +85,18 @@ export interface GuestApplication {
   status: ApplicationStatus;
   applied_at: string;
   cancelled_at?: string;
+}
+
+export interface EventTag {
+  id: string;
+  name: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface EventWithApplication extends Event {
+  hasApplied?: boolean;
+  tags?: EventTag[];
 }
 

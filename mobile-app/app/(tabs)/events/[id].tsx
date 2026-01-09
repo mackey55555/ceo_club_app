@@ -86,23 +86,53 @@ export default function EventDetailScreen() {
     try {
       setApplying(true);
 
-      // UUIDを生成
-      const uuid = await Crypto.randomUUID();
-
-      const { data, error: applyError } = await supabase
+      // 既存の申込みレコード（キャンセル済み含む）をチェック
+      const { data: existing, error: checkError } = await supabase
         .from('event_applications')
-        .insert({
-          id: uuid,
-          event_id: event.id,
-          user_id: user.id,
-          status: 'applied',
-        })
-        .select()
-        .single();
+        .select('id')
+        .eq('event_id', event.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (applyError) throw applyError;
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError;
+      }
 
-      setApplication(data as EventApplication);
+      let result;
+      if (existing) {
+        // 既存レコードがある場合は更新（キャンセル済みから再申込み）
+        const { data, error: updateError } = await supabase
+          .from('event_applications')
+          .update({
+            status: 'applied',
+            cancelled_at: null,
+            applied_at: new Date().toISOString(),
+          })
+          .eq('id', existing.id)
+          .select()
+          .single();
+
+        if (updateError) throw updateError;
+        result = data;
+      } else {
+        // 新規レコードの場合は挿入
+        const uuid = await Crypto.randomUUID();
+        const { data, error: insertError } = await supabase
+          .from('event_applications')
+          .insert({
+            id: uuid,
+            event_id: event.id,
+            user_id: user.id,
+            status: 'applied',
+          })
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+        result = data;
+      }
+
+      setApplication(result as EventApplication);
       Alert.alert('申し込み完了', 'イベントへの申し込みが完了しました');
     } catch (err: any) {
       console.error('Error applying to event:', err);

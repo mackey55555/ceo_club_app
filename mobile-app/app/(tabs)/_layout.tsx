@@ -34,7 +34,7 @@ export default function TabsLayout() {
       return 'イベント';
     }
     if (lastSegment === 'history') {
-      return '参加履歴';
+      return '申込済';
     }
     if (lastSegment === 'reports') {
       return 'イベント報告記';

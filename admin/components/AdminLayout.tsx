@@ -13,6 +13,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Tag,
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -49,6 +50,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { href: '/admin/members', label: '会員管理', icon: Users },
     { href: '/admin/events', label: 'イベント管理', icon: Calendar },
     { href: '/admin/news', label: 'お知らせ管理', icon: Megaphone },
+    { href: '/admin/tags', label: 'タグ管理', icon: Tag },
     { href: '/admin/circles', label: 'サークル管理', icon: Link2 },
     { href: '/admin/administrators', label: '管理者管理', icon: UserCog },
   ];

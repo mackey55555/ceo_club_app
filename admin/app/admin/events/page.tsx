@@ -271,6 +271,14 @@ export default function EventsPage() {
                           編集
                         </Link>
                         <Link
+                          href={`/admin/events/new?copyFrom=${event.id}`}
+                          className="text-indigo-600 hover:text-indigo-900"
+                          style={{ color: '#a8895b' }}
+                          title="イベントをコピー"
+                        >
+                          コピー
+                        </Link>
+                        <Link
                           href={`/admin/events/${event.id}/applications`}
                           className="text-indigo-600 hover:text-indigo-900"
                           style={{ color: '#243266' }}

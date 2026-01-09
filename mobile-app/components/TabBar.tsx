@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 const tabs = [
   { name: 'news', label: 'お知らせ', icon: 'newspaper-outline' },
   { name: 'events', label: 'イベント', icon: 'calendar-outline' },
-  { name: 'history', label: '参加履歴', icon: 'time-outline' },
+  { name: 'history', label: '申込済', icon: 'time-outline' },
   { name: 'reports', label: '報告記', icon: 'document-text-outline' },
   { name: 'member', label: '会員証', icon: 'person-outline' },
 ];

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,19 +12,18 @@ import {
   Switch,
   Modal,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEvents, EventFilters } from '../../hooks/useEvents';
-import { router } from 'expo-router';
-import { EventWithApplication } from '../../types';
+import { router, useFocusEffect } from 'expo-router';
+import { EventWithApplication, EventTag } from '../../types';
 import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../../lib/supabase';
 
 type ViewType = 'list' | 'calendar' | 'venue';
 
 export default function EventsScreen() {
   const [viewType, setViewType] = useState<ViewType>('list');
-  const [filters, setFilters] = useState<EventFilters>({
-    includePast: false,
-    applicationStatus: 'all',
-  });
+  const [filters, setFilters] = useState<EventFilters | undefined>(undefined);
   const [showFilters, setShowFilters] = useState(false);
   // フィルターモーダル内の一時的な状態
   const [tempFilters, setTempFilters] = useState<EventFilters>({
@@ -34,6 +33,9 @@ export default function EventsScreen() {
   const [tempKeyword, setTempKeyword] = useState('');
   const [tempSelectedYear, setTempSelectedYear] = useState<number | undefined>();
   const [tempSelectedMonth, setTempSelectedMonth] = useState<number | undefined>();
+  const [tags, setTags] = useState<EventTag[]>([]);
+  const [tempSelectedTagIds, setTempSelectedTagIds] = useState<string[]>([]);
+  const [tempShowAll, setTempShowAll] = useState(false);
 
   // カレンダー用の状態
   const [calendarMonth, setCalendarMonth] = useState(new Date());
@@ -43,6 +45,94 @@ export default function EventsScreen() {
 
   const { events, loading, error, refetch } = useEvents(filters);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingTags, setLoadingTags] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // フィルター条件をAsyncStorageから読み込み
+  const loadFilters = useCallback(async () => {
+    try {
+      const savedFilters = await AsyncStorage.getItem('eventFilters');
+      if (savedFilters) {
+        const parsed = JSON.parse(savedFilters);
+        setFilters({
+          includePast: parsed.includePast || false,
+          applicationStatus: parsed.applicationStatus || 'all',
+          year: parsed.year,
+          month: parsed.month,
+          keyword: parsed.keyword,
+          tagIds: parsed.tagIds,
+          showAll: parsed.showAll || false,
+        });
+      } else {
+        // 保存されたフィルターがない場合はデフォルト値を設定
+        setFilters({
+          includePast: false,
+          applicationStatus: 'all',
+        });
+      }
+    } catch (error) {
+      console.error('Error loading filters from storage:', error);
+      // エラー時はデフォルト値を設定
+      setFilters({
+        includePast: false,
+        applicationStatus: 'all',
+      });
+    }
+  }, []);
+
+  // 初回マウント時と画面フォーカス時にフィルターを読み込み
+  useEffect(() => {
+    const initializeFilters = async () => {
+      await loadFilters();
+      await fetchTags();
+      setIsInitialLoad(false);
+    };
+    initializeFilters();
+  }, []);
+
+  // 画面がフォーカスされるたびにフィルターを再読み込み
+  useFocusEffect(
+    useCallback(() => {
+      if (!isInitialLoad) {
+        loadFilters();
+      }
+    }, [loadFilters, isInitialLoad])
+  );
+
+  // フィルター条件をAsyncStorageに保存（初回読み込み後のみ）
+  useEffect(() => {
+    if (!isInitialLoad && filters !== undefined) {
+      saveFiltersToStorage();
+    }
+  }, [filters, isInitialLoad]);
+
+
+  const saveFiltersToStorage = async () => {
+    try {
+      await AsyncStorage.setItem('eventFilters', JSON.stringify(filters));
+    } catch (error) {
+      console.error('Error saving filters to storage:', error);
+    }
+  };
+
+  const fetchTags = async () => {
+    try {
+      setLoadingTags(true);
+      const { data, error } = await supabase
+        .from('event_tags')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setTags(data || []);
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+    } finally {
+      setLoadingTags(false);
+    }
+  };
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -52,13 +142,17 @@ export default function EventsScreen() {
 
   // フィルターモーダルを開くときに現在のフィルターを一時状態にコピー
   const openFilters = () => {
-    setTempFilters({
-      includePast: filters.includePast || false,
-      applicationStatus: filters.applicationStatus || 'all',
-    });
-    setTempKeyword(filters.keyword || '');
-    setTempSelectedYear(filters.year);
-    setTempSelectedMonth(filters.month);
+    if (filters) {
+      setTempFilters({
+        includePast: filters.includePast || false,
+        applicationStatus: filters.applicationStatus || 'all',
+      });
+      setTempKeyword(filters.keyword || '');
+      setTempSelectedYear(filters.year);
+      setTempSelectedMonth(filters.month);
+      setTempSelectedTagIds(filters.tagIds || []);
+      setTempShowAll(filters.showAll || false);
+    }
     setShowFilters(true);
   };
 
@@ -69,6 +163,9 @@ export default function EventsScreen() {
       year: tempSelectedYear,
       month: tempSelectedMonth,
       keyword: tempKeyword.trim() || undefined,
+      // ALLがONでもtagIdsは保持する（フィルター適用時には使わないが、状態は保持）
+      tagIds: tempSelectedTagIds.length > 0 ? tempSelectedTagIds : undefined,
+      showAll: tempShowAll,
     });
     setShowFilters(false);
   };
@@ -81,6 +178,23 @@ export default function EventsScreen() {
     setTempKeyword('');
     setTempSelectedYear(undefined);
     setTempSelectedMonth(undefined);
+    setTempSelectedTagIds([]);
+    setTempShowAll(false);
+  };
+
+  const handleTagToggle = (tagId: string) => {
+    if (tempShowAll) return; // ALLがONの場合は何もしない
+
+    if (tempSelectedTagIds.includes(tagId)) {
+      setTempSelectedTagIds(tempSelectedTagIds.filter((id) => id !== tagId));
+    } else {
+      setTempSelectedTagIds([...tempSelectedTagIds, tagId]);
+    }
+  };
+
+  const handleShowAllToggle = (checked: boolean) => {
+    setTempShowAll(checked);
+    // ALLをONにした場合、他のタグのチェックは外さない（グレーアウトのみ）
   };
 
   const formatDate = (dateString: string) => {
@@ -158,7 +272,8 @@ export default function EventsScreen() {
   const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
-  if (loading && !refreshing) {
+  // フィルターが読み込まれるまで待つ
+  if (filters === undefined || (loading && !refreshing)) {
     return (
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
@@ -537,7 +652,7 @@ export default function EventsScreen() {
           <Ionicons name="filter" size={20} color="#243266" />
           <Text style={styles.filterButtonText}>フィルター</Text>
         </TouchableOpacity>
-        {filters.keyword && (
+        {filters?.keyword && (
           <View style={styles.activeFilter}>
             <Text style={styles.activeFilterText}>
               検索: {filters.keyword}
@@ -692,6 +807,62 @@ export default function EventsScreen() {
                   onChangeText={setTempKeyword}
                   placeholderTextColor="#999"
                 />
+              </View>
+
+              {/* タグフィルター */}
+              <View style={styles.filterSection}>
+                <Text style={styles.filterLabel}>タグ</Text>
+                {/* ALLチェック */}
+                <View style={styles.filterRow}>
+                  <Text style={styles.filterLabel}>ALL</Text>
+                  <Switch
+                    value={tempShowAll}
+                    onValueChange={handleShowAllToggle}
+                    trackColor={{ false: '#e0e0e0', true: '#243266' }}
+                  />
+                </View>
+                {/* タグリスト */}
+                {loadingTags ? (
+                  <ActivityIndicator size="small" color="#243266" />
+                ) : (
+                  <View style={styles.tagContainer}>
+                    {tags.map((tag) => {
+                      const isSelected = tempSelectedTagIds.includes(tag.id);
+                      const isDisabled = tempShowAll;
+                      return (
+                        <TouchableOpacity
+                          key={tag.id}
+                          style={[
+                            styles.tagChip,
+                            isSelected && !isDisabled && styles.tagChipSelected,
+                            isDisabled && styles.tagChipDisabled,
+                            isSelected && isDisabled && styles.tagChipSelectedDisabled,
+                          ]}
+                          onPress={() => handleTagToggle(tag.id)}
+                          disabled={isDisabled}
+                        >
+                          <Text
+                            style={[
+                              styles.tagChipText,
+                              isSelected && !isDisabled && styles.tagChipTextSelected,
+                              isDisabled && styles.tagChipTextDisabled,
+                              isSelected && isDisabled && styles.tagChipTextSelectedDisabled,
+                            ]}
+                          >
+                            {tag.name}
+                          </Text>
+                          {isSelected && (
+                            <Ionicons 
+                              name="checkmark" 
+                              size={16} 
+                              color={isDisabled ? "#999" : "#243266"} 
+                            />
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
               </View>
             </ScrollView>
 
@@ -1212,5 +1383,51 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     fontWeight: '600',
+  },
+  tagContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  tagChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    backgroundColor: '#fff',
+    gap: 4,
+  },
+  tagChipSelected: {
+    borderColor: '#243266',
+    backgroundColor: '#e3f2fd',
+  },
+  tagChipDisabled: {
+    opacity: 0.5,
+    borderColor: '#ccc',
+    backgroundColor: '#f5f5f5',
+  },
+  tagChipSelectedDisabled: {
+    opacity: 0.5,
+    borderColor: '#999',
+    backgroundColor: '#e8e8e8',
+  },
+  tagChipText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  tagChipTextSelected: {
+    color: '#243266',
+    fontWeight: '600',
+  },
+  tagChipTextDisabled: {
+    color: '#999',
+  },
+  tagChipTextSelectedDisabled: {
+    color: '#666',
+    fontWeight: '500',
   },
 });

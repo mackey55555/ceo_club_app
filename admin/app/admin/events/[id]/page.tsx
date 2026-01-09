@@ -40,6 +40,10 @@ export default function EventDetailPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [statuses, setStatuses] = useState<{ id: string; name: string }[]>([]);
+  const [tags, setTags] = useState<{ id: string; name: string; is_active: boolean }[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [newTagName, setNewTagName] = useState('');
+  const [showNewTagInput, setShowNewTagInput] = useState(false);
   const [editMode, setEditMode] = useState(isNew);
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [formData, setFormData] = useState({
@@ -66,6 +70,7 @@ export default function EventDetailPage() {
     }
 
     fetchStatuses();
+    fetchTags();
     if (!isNew) {
       fetchEvent();
     } else {
@@ -84,6 +89,22 @@ export default function EventDetailPage() {
       setStatuses(data || []);
     } catch (error) {
       console.error('Error fetching statuses:', error);
+    }
+  };
+
+  const fetchTags = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('event_tags')
+        .select('id, name, is_active')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setTags(data || []);
+    } catch (error) {
+      console.error('Error fetching tags:', error);
     }
   };
 
@@ -120,10 +141,48 @@ export default function EventDetailPage() {
           : '',
         allow_guest: data.allow_guest || false,
       });
+
+      // タグの取得
+      const { data: tagRelations } = await supabase
+        .from('event_event_tags')
+        .select('tag_id')
+        .eq('event_id', eventId);
+
+      if (tagRelations) {
+        setSelectedTagIds(tagRelations.map((r) => r.tag_id));
+      }
     } catch (error) {
       console.error('Error fetching event:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateTag = async () => {
+    if (!newTagName.trim()) {
+      alert('タグ名を入力してください');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('event_tags')
+        .insert({
+          name: newTagName.trim(),
+          sort_order: tags.length,
+          is_active: true,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setTags([...tags, data]);
+      setSelectedTagIds([...selectedTagIds, data.id]);
+      setNewTagName('');
+      setShowNewTagInput(false);
+    } catch (error: any) {
+      alert('タグの作成に失敗しました: ' + error.message);
     }
   };
 
@@ -192,6 +251,7 @@ export default function EventDetailPage() {
         updateData.publish_at = null;
       }
 
+      let savedEventId = eventId;
       if (isNew) {
         // 管理者はusersテーブルに存在しないため、created_byはNULLにする
         // updateData.created_by = admin.id;
@@ -202,8 +262,7 @@ export default function EventDetailPage() {
           .single();
 
         if (error) throw error;
-        alert('イベントを作成しました');
-        router.push(`/admin/events/${data.id}`);
+        savedEventId = data.id;
       } else {
         const { error } = await supabase
           .from('events')
@@ -211,6 +270,35 @@ export default function EventDetailPage() {
           .eq('id', eventId);
 
         if (error) throw error;
+      }
+
+      // タグの関連付けを更新
+      // 既存の関連を削除
+      const { error: deleteError } = await supabase
+        .from('event_event_tags')
+        .delete()
+        .eq('event_id', savedEventId);
+
+      if (deleteError) throw deleteError;
+
+      // 新しい関連を追加
+      if (selectedTagIds.length > 0) {
+        const tagRelations = selectedTagIds.map((tagId) => ({
+          event_id: savedEventId,
+          tag_id: tagId,
+        }));
+
+        const { error: insertError } = await supabase
+          .from('event_event_tags')
+          .insert(tagRelations);
+
+        if (insertError) throw insertError;
+      }
+
+      if (isNew) {
+        alert('イベントを作成しました');
+        router.push(`/admin/events/${savedEventId}`);
+      } else {
         alert('保存しました');
         setEditMode(false);
         fetchEvent();
@@ -309,6 +397,13 @@ export default function EventDetailPage() {
                 style={{ backgroundColor: '#243266' }}
               >
                 編集
+              </button>
+              <button
+                onClick={() => router.push(`/admin/events/new?copyFrom=${eventId}`)}
+                className="px-4 py-2 text-white rounded hover:opacity-90"
+                style={{ backgroundColor: '#a8895b' }}
+              >
+                コピー
               </button>
               <button
                 onClick={handleDelete}
@@ -557,6 +652,78 @@ export default function EventDetailPage() {
                 </label>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  タグ
+                </label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {tags.map((tag) => (
+                    <label
+                      key={tag.id}
+                      className="flex items-center gap-2 px-3 py-1 border border-gray-300 rounded cursor-pointer hover:bg-gray-50"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedTagIds.includes(tag.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedTagIds([...selectedTagIds, tag.id]);
+                          } else {
+                            setSelectedTagIds(selectedTagIds.filter((id) => id !== tag.id));
+                          }
+                        }}
+                        className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-2"
+                        style={{ focusRingColor: '#243266' }}
+                      />
+                      <span className="text-sm text-gray-700">{tag.name}</span>
+                    </label>
+                  ))}
+                </div>
+                {showNewTagInput ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newTagName}
+                      onChange={(e) => setNewTagName(e.target.value)}
+                      placeholder="新しいタグ名"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                      style={{ focusRingColor: '#243266' }}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleCreateTag();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCreateTag}
+                      className="px-4 py-2 text-white rounded hover:opacity-90"
+                      style={{ backgroundColor: '#243266' }}
+                    >
+                      追加
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowNewTagInput(false);
+                        setNewTagName('');
+                      }}
+                      className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+                    >
+                      キャンセル
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowNewTagInput(true)}
+                    className="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 text-gray-700"
+                  >
+                    + 新しいタグを追加
+                  </button>
+                )}
+              </div>
+
                 <div className="flex gap-4 pt-4 border-t">
                   <button
                     onClick={handleSave}
@@ -744,14 +911,35 @@ export default function EventDetailPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  非会員申込み許可
-                </label>
-                <div className="text-gray-900">
-                  {event?.allow_guest ? '許可' : '不許可'}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    非会員申込み許可
+                  </label>
+                  <div className="text-gray-900">
+                    {event?.allow_guest ? '許可' : '不許可'}
+                  </div>
                 </div>
-              </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    タグ
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {tags
+                      .filter((tag) => selectedTagIds.includes(tag.id))
+                      .map((tag) => (
+                        <span
+                          key={tag.id}
+                          className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm"
+                        >
+                          {tag.name}
+                        </span>
+                      ))}
+                    {selectedTagIds.length === 0 && (
+                      <span className="text-gray-400 text-sm">タグなし</span>
+                    )}
+                  </div>
+                </div>
 
               {event?.allow_guest && !isNew && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

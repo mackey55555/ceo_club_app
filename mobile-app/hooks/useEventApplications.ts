@@ -108,7 +108,7 @@ export function useEventApplications(filters?: ApplicationFilters) {
 
       setEvents(eventsWithApplications);
     } catch (err: any) {
-      setError(err.message || '参加履歴の取得に失敗しました');
+      setError(err.message || '申込済の取得に失敗しました');
       console.error('Error fetching applications:', err);
     } finally {
       setLoading(false);

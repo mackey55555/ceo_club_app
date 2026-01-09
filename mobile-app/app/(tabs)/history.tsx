@@ -198,7 +198,7 @@ export default function HistoryScreen() {
       >
         {events.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>参加履歴はありません</Text>
+            <Text style={styles.emptyText}>申込済はありません</Text>
           </View>
         ) : (
           events.map((event) => (

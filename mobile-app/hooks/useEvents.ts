@@ -9,6 +9,8 @@ export interface EventFilters {
   includePast?: boolean;
   applicationStatus?: 'applied' | 'not_applied' | 'all';
   keyword?: string;
+  tagIds?: string[];
+  showAll?: boolean; // ALLチェックがONの場合
 }
 
 export interface EventWithApplication extends Event {
@@ -32,7 +34,13 @@ export function useEvents(filters?: EventFilters) {
 
       let query = supabase
         .from('events')
-        .select('*')
+        .select(`
+          *,
+          event_event_tags(
+            tag_id,
+            event_tags(id, name, sort_order, is_active)
+          )
+        `)
         .eq('status_id', '00000000-0000-0000-0000-000000000202') // published
         .or('publish_at.is.null,publish_at.lte.' + new Date().toISOString());
 
@@ -73,7 +81,15 @@ export function useEvents(filters?: EventFilters) {
 
       if (fetchError) throw fetchError;
 
-      let eventsWithApplications = (data as Event[]) || [];
+      let eventsWithApplications = ((data as any[]) || []).map((event) => {
+        const tags = event.event_event_tags
+          ?.map((relation: any) => relation.event_tags)
+          .filter((tag: any) => tag && tag.is_active) || [];
+        return {
+          ...event,
+          tags,
+        };
+      }) as EventWithApplication[];
 
       // 申込みステータスを取得
       if (user) {
@@ -105,6 +121,15 @@ export function useEvents(filters?: EventFilters) {
             (e) => e.hasApplied !== true
           );
         }
+      }
+
+      // タグフィルター
+      if (filters?.tagIds && filters.tagIds.length > 0 && !filters.showAll) {
+        eventsWithApplications = eventsWithApplications.filter((event) => {
+          const eventTagIds = event.tags?.map((tag) => tag.id) || [];
+          // 選択されたタグのいずれかがイベントに含まれているか
+          return filters.tagIds!.some((tagId) => eventTagIds.includes(tagId));
+        });
       }
 
       setEvents(eventsWithApplications);

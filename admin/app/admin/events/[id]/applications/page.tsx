@@ -34,6 +34,14 @@ interface GuestApplication {
 interface Event {
   id: string;
   title: string;
+  capacity?: number;
+}
+
+interface Member {
+  id: string;
+  full_name: string;
+  email: string;
+  company_name?: string;
 }
 
 export default function EventApplicationsPage() {
@@ -46,6 +54,10 @@ export default function EventApplicationsPage() {
   const [guestApplications, setGuestApplications] = useState<GuestApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'members' | 'guests'>('members');
+  const [showMemberModal, setShowMemberModal] = useState(false);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [searchMemberKeyword, setSearchMemberKeyword] = useState('');
+  const [loadingMembers, setLoadingMembers] = useState(false);
 
   useEffect(() => {
     // セッション確認
@@ -63,7 +75,7 @@ export default function EventApplicationsPage() {
     try {
       const { data, error } = await supabase
         .from('events')
-        .select('id, title')
+        .select('id, title, capacity')
         .eq('id', eventId)
         .single();
 
@@ -137,6 +149,145 @@ export default function EventApplicationsPage() {
         return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const handleCancelMemberApplication = async (applicationId: string) => {
+    if (!confirm('この申込みをキャンセルしますか？')) return;
+
+    try {
+      const { error } = await supabase
+        .from('event_applications')
+        .update({
+          status: 'cancelled',
+          cancelled_at: new Date().toISOString(),
+        })
+        .eq('id', applicationId);
+
+      if (error) throw error;
+
+      alert('キャンセルしました');
+      fetchApplications();
+    } catch (error: any) {
+      alert('キャンセルに失敗しました: ' + error.message);
+    }
+  };
+
+  const handleCancelGuestApplication = async (applicationId: string) => {
+    if (!confirm('この申込みをキャンセルしますか？')) return;
+
+    try {
+      const { error } = await supabase
+        .from('guest_applications')
+        .update({
+          status: 'cancelled',
+          cancelled_at: new Date().toISOString(),
+        })
+        .eq('id', applicationId);
+
+      if (error) throw error;
+
+      alert('キャンセルしました');
+      fetchApplications();
+    } catch (error: any) {
+      alert('キャンセルに失敗しました: ' + error.message);
+    }
+  };
+
+  const fetchMembers = async () => {
+    try {
+      setLoadingMembers(true);
+      let query = supabase
+        .from('users')
+        .select('id, full_name, email, company_name')
+        .order('full_name', { ascending: true });
+
+      if (searchMemberKeyword.trim()) {
+        query = query.or(
+          `email.ilike.%${searchMemberKeyword}%,full_name.ilike.%${searchMemberKeyword}%,company_name.ilike.%${searchMemberKeyword}%`
+        );
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      setMembers(data || []);
+    } catch (error) {
+      console.error('Error fetching members:', error);
+      alert('会員の取得に失敗しました');
+    } finally {
+      setLoadingMembers(false);
+    }
+  };
+
+  const handleOpenMemberModal = () => {
+    setShowMemberModal(true);
+    setSearchMemberKeyword('');
+    fetchMembers();
+  };
+
+  const handleApplyForMember = async (userId: string) => {
+    try {
+      // 既に申込み済みかチェック
+      const { data: existing, error: checkError } = await supabase
+        .from('event_applications')
+        .select('id')
+        .eq('event_id', eventId)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        // PGRST116はレコードが見つからないエラー（正常）
+        throw checkError;
+      }
+
+      if (existing) {
+        alert('この会員は既に申込み済みです');
+        return;
+      }
+
+      // 定員チェック
+      if (event?.capacity) {
+        const { count: memberCount } = await supabase
+          .from('event_applications')
+          .select('*', { count: 'exact', head: true })
+          .eq('event_id', eventId)
+          .eq('status', 'applied');
+
+        const { count: guestCount } = await supabase
+          .from('guest_applications')
+          .select('*', { count: 'exact', head: true })
+          .eq('event_id', eventId)
+          .eq('status', 'applied');
+
+        const totalApplications = (memberCount || 0) + (guestCount || 0);
+        if (totalApplications >= event.capacity) {
+          alert('申し訳ございません。定員に達しました。');
+          return;
+        }
+      }
+
+      // UUIDを生成
+      const uuid = crypto.randomUUID();
+
+      // 申込みを追加
+      const { error } = await supabase
+        .from('event_applications')
+        .insert({
+          id: uuid,
+          event_id: eventId,
+          user_id: userId,
+          status: 'applied',
+        });
+
+      if (error) throw error;
+
+      alert('代理申込みが完了しました');
+      setShowMemberModal(false);
+      fetchApplications();
+    } catch (error: any) {
+      console.error('Error applying for member:', error);
+      alert('申込みに失敗しました: ' + (error.message || '不明なエラーが発生しました'));
     }
   };
 
@@ -220,13 +371,24 @@ export default function EventApplicationsPage() {
           <h2 className="text-xl font-bold text-gray-900">
             申込み一覧: {event?.title}
           </h2>
-          <button
-            onClick={exportToCSV}
-            className="px-4 py-2 text-white rounded hover:opacity-90"
-            style={{ backgroundColor: '#243266' }}
-          >
-            CSVエクスポート
-          </button>
+          <div className="flex gap-2">
+            {activeTab === 'members' && (
+              <button
+                onClick={handleOpenMemberModal}
+                className="px-4 py-2 text-white rounded hover:opacity-90"
+                style={{ backgroundColor: '#a8895b' }}
+              >
+                代理申込み
+              </button>
+            )}
+            <button
+              onClick={exportToCSV}
+              className="px-4 py-2 text-white rounded hover:opacity-90"
+              style={{ backgroundColor: '#243266' }}
+            >
+              CSVエクスポート
+            </button>
+          </div>
         </div>
         {/* タブ */}
         <div className="bg-white rounded-lg shadow mb-6">
@@ -295,6 +457,9 @@ export default function EventApplicationsPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       キャンセル日時
                     </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      操作
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -329,6 +494,16 @@ export default function EventApplicationsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDateTime(app.cancelled_at)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        {app.status === 'applied' && (
+                          <button
+                            onClick={() => handleCancelMemberApplication(app.id)}
+                            className="text-gray-600 hover:text-gray-900"
+                          >
+                            キャンセル
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -370,6 +545,9 @@ export default function EventApplicationsPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       キャンセル日時
                     </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      操作
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -408,11 +586,105 @@ export default function EventApplicationsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDateTime(app.cancelled_at)}
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        {app.status === 'applied' && (
+                          <button
+                            onClick={() => handleCancelGuestApplication(app.id)}
+                            className="text-gray-600 hover:text-gray-900"
+                          >
+                            キャンセル
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             )}
+          </div>
+        )}
+
+        {/* 会員選択モーダル */}
+        {showMemberModal && (
+          <div className="fixed inset-0 bg-gray-900 bg-opacity-30 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-bold text-gray-900">会員を選択</h3>
+                  <button
+                    onClick={() => setShowMemberModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="mt-4">
+                  <input
+                    type="text"
+                    placeholder="氏名、メールアドレス、会社名で検索"
+                    value={searchMemberKeyword}
+                    onChange={(e) => {
+                      setSearchMemberKeyword(e.target.value);
+                      fetchMembers();
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                    style={{ focusRingColor: '#243266' }}
+                  />
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6">
+                {loadingMembers ? (
+                  <div className="text-center py-8 text-gray-500">読み込み中...</div>
+                ) : members.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">会員が見つかりませんでした</div>
+                ) : (
+                  <div className="space-y-2">
+                    {members.map((member) => {
+                      const isAlreadyApplied = memberApplications.some(
+                        (app) => app.user_id === member.id && app.status === 'applied'
+                      );
+                      return (
+                        <div
+                          key={member.id}
+                          className={`p-4 border rounded-lg ${
+                            isAlreadyApplied
+                              ? 'bg-gray-50 border-gray-200'
+                              : 'border-gray-200 hover:bg-gray-50 cursor-pointer'
+                          }`}
+                          onClick={() => !isAlreadyApplied && handleApplyForMember(member.id)}
+                        >
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <div className="font-medium text-gray-900">{member.full_name}</div>
+                              <div className="text-sm text-gray-500">{member.email}</div>
+                              {member.company_name && (
+                                <div className="text-sm text-gray-500">{member.company_name}</div>
+                              )}
+                            </div>
+                            {isAlreadyApplied ? (
+                              <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
+                                申込済
+                              </span>
+                            ) : (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleApplyForMember(member.id);
+                                }}
+                                className="px-4 py-2 text-white rounded hover:opacity-90"
+                                style={{ backgroundColor: '#243266' }}
+                              >
+                                選択
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>

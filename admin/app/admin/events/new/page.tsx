@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import RichTextEditor from '@/components/RichTextEditor';
@@ -10,8 +10,15 @@ import AdminLayout from '@/components/AdminLayout';
 
 export default function NewEventPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const copyFromId = searchParams.get('copyFrom');
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [statuses, setStatuses] = useState<{ id: string; name: string }[]>([]);
+  const [tags, setTags] = useState<{ id: string; name: string; is_active: boolean }[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [newTagName, setNewTagName] = useState('');
+  const [showNewTagInput, setShowNewTagInput] = useState(false);
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [formData, setFormData] = useState({
     title: '',
@@ -37,7 +44,11 @@ export default function NewEventPage() {
     }
 
     fetchStatuses();
-  }, [router]);
+    fetchTags();
+    if (copyFromId) {
+      fetchEventToCopy(copyFromId);
+    }
+  }, [router, copyFromId]);
 
   const fetchStatuses = async () => {
     try {
@@ -50,6 +61,97 @@ export default function NewEventPage() {
       setStatuses(data || []);
     } catch (error) {
       console.error('Error fetching statuses:', error);
+    }
+  };
+
+  const fetchTags = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('event_tags')
+        .select('id, name, is_active')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setTags(data || []);
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+    }
+  };
+
+  const fetchEventToCopy = async (eventId: string) => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', eventId)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setFormData({
+          title: `${data.title}（コピー）`,
+          body: data.body || '',
+          thumbnail_url: data.thumbnail_url || '',
+          event_date: data.event_date || '',
+          start_time: data.start_time || '',
+          end_time: data.end_time || '',
+          venue: data.venue || '',
+          capacity: data.capacity ? String(data.capacity) : '',
+          cancel_deadline: data.cancel_deadline
+            ? new Date(data.cancel_deadline).toISOString().slice(0, 16)
+            : '',
+          status_id: '00000000-0000-0000-0000-000000000201', // コピー時は常にdraft
+          publish_at: '', // コピー時は公開日時をクリア
+          allow_guest: data.allow_guest || false,
+        });
+
+        // コピー元のタグも取得
+        const { data: tagRelations } = await supabase
+          .from('event_event_tags')
+          .select('tag_id')
+          .eq('event_id', eventId);
+
+        if (tagRelations) {
+          setSelectedTagIds(tagRelations.map((r) => r.tag_id));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching event to copy:', error);
+      alert('コピー元のイベントの取得に失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateTag = async () => {
+    if (!newTagName.trim()) {
+      alert('タグ名を入力してください');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('event_tags')
+        .insert({
+          name: newTagName.trim(),
+          sort_order: tags.length,
+          is_active: true,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setTags([...tags, data]);
+      setSelectedTagIds([...selectedTagIds, data.id]);
+      setNewTagName('');
+      setShowNewTagInput(false);
+    } catch (error: any) {
+      alert('タグの作成に失敗しました: ' + error.message);
     }
   };
 
@@ -116,6 +218,20 @@ export default function NewEventPage() {
 
       if (error) throw error;
 
+      // タグの関連付け
+      if (selectedTagIds.length > 0) {
+        const tagRelations = selectedTagIds.map((tagId) => ({
+          event_id: data.id,
+          tag_id: tagId,
+        }));
+
+        const { error: tagError } = await supabase
+          .from('event_event_tags')
+          .insert(tagRelations);
+
+        if (tagError) throw tagError;
+      }
+
       alert('イベントを作成しました');
       router.push(`/admin/events/${data.id}`);
     } catch (error: any) {
@@ -153,9 +269,28 @@ export default function NewEventPage() {
     return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
   };
 
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="text-center">読み込み中...</div>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto">
+        {copyFromId && (
+          <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-800">
+              イベントをコピーしています。必要に応じて内容を編集してください。
+            </p>
+          </div>
+        )}
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* 左側: 編集フォーム */}
@@ -394,6 +529,78 @@ export default function NewEventPage() {
                   非会員申込み許可
                 </span>
               </label>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                タグ
+              </label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {tags.map((tag) => (
+                  <label
+                    key={tag.id}
+                    className="flex items-center gap-2 px-3 py-1 border border-gray-300 rounded cursor-pointer hover:bg-gray-50"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedTagIds.includes(tag.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedTagIds([...selectedTagIds, tag.id]);
+                        } else {
+                          setSelectedTagIds(selectedTagIds.filter((id) => id !== tag.id));
+                        }
+                      }}
+                      className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-2"
+                      style={{ focusRingColor: '#243266' }}
+                    />
+                    <span className="text-sm text-gray-700">{tag.name}</span>
+                  </label>
+                ))}
+              </div>
+              {showNewTagInput ? (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newTagName}
+                    onChange={(e) => setNewTagName(e.target.value)}
+                    placeholder="新しいタグ名"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                    style={{ focusRingColor: '#243266' }}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleCreateTag();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCreateTag}
+                    className="px-4 py-2 text-white rounded hover:opacity-90"
+                    style={{ backgroundColor: '#243266' }}
+                  >
+                    追加
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowNewTagInput(false);
+                      setNewTagName('');
+                    }}
+                    className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+                  >
+                    キャンセル
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowNewTagInput(true)}
+                  className="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 text-gray-700"
+                >
+                  + 新しいタグを追加
+                </button>
+              )}
             </div>
 
                 <div className="flex gap-4 pt-4 border-t">
