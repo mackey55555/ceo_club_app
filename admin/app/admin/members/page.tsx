@@ -11,6 +11,9 @@ interface User {
   email: string;
   full_name: string;
   company_name?: string;
+  district?: string;
+  gender?: string;
+  birth_date?: string;
   status_id: string;
   status?: {
     name: string;
@@ -63,6 +66,9 @@ export default function MembersPage() {
           email,
           full_name,
           company_name,
+          district,
+          gender,
+          birth_date,
           status_id,
           created_at,
           status:member_statuses(id, name, description)
@@ -127,6 +133,87 @@ export default function MembersPage() {
     return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
   };
 
+  const formatDateTime = (dateString: string | null | undefined) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  };
+
+  const getGenderLabel = (gender: string | null | undefined) => {
+    if (!gender) return '-';
+    switch (gender) {
+      case 'male':
+        return '男性';
+      case 'female':
+        return '女性';
+      case 'other':
+        return '回答しない';
+      default:
+        return gender;
+    }
+  };
+
+  const exportToCSV = () => {
+    const allData: any[] = [];
+
+    // 会員情報を追加
+    members.forEach((member) => {
+      allData.push({
+        氏名: member.full_name,
+        メールアドレス: member.email,
+        会社名: member.company_name || '-',
+        地区会: member.district || '-',
+        性別: getGenderLabel(member.gender),
+        生年月日: member.birth_date ? formatDate(member.birth_date) : '-',
+        ステータス: member.status ? getStatusLabel(member.status.name) : '-',
+        登録日: formatDateTime(member.created_at),
+      });
+    });
+
+    // CSVヘッダー
+    const headers = [
+      '氏名',
+      'メールアドレス',
+      '会社名',
+      '地区会',
+      '性別',
+      '生年月日',
+      'ステータス',
+      '登録日',
+    ];
+
+    // CSVデータ
+    const csvRows = [
+      headers.join(','),
+      ...allData.map((row) =>
+        headers.map((header) => {
+          const value = row[header];
+          // カンマや改行を含む場合はダブルクォートで囲む
+          if (value && (value.includes(',') || value.includes('\n') || value.includes('"'))) {
+            return `"${String(value).replace(/"/g, '""')}"`;
+          }
+          return value || '';
+        }).join(',')
+      ),
+    ];
+
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob(['\uFEFF' + csvContent], {
+      type: 'text/csv;charset=utf-8;',
+    });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute(
+      'download',
+      `members_${new Date().getTime()}.csv`
+    );
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto">
@@ -146,6 +233,13 @@ export default function MembersPage() {
               新規作成
             </Link>
           </div>
+          <button
+            onClick={exportToCSV}
+            className="px-4 py-2 text-white rounded hover:opacity-90"
+            style={{ backgroundColor: '#243266' }}
+          >
+            CSVエクスポート
+          </button>
         </div>
         {/* 検索・フィルター */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
