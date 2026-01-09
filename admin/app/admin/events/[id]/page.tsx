@@ -753,6 +753,36 @@ export default function EventDetailPage() {
                 </div>
               </div>
 
+              {event?.allow_guest && !isNew && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    非会員申込みURL
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={`${typeof window !== 'undefined' ? window.location.origin : ''}/apply/${eventId}`}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = `${window.location.origin}/apply/${eventId}`;
+                        navigator.clipboard.writeText(url);
+                        alert('URLをコピーしました');
+                      }}
+                      className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm"
+                    >
+                      コピー
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    このURLを非会員に共有してください
+                  </p>
+                </div>
+              )}
+
               <div className="pt-6 border-t border-gray-200">
                 <div className="text-sm text-gray-500">
                   <div>作成日: {formatDateTime(event?.created_at)}</div>
