@@ -17,6 +17,7 @@ interface Event {
     name: string;
   };
   publish_at?: string;
+  allow_guest: boolean;
   created_at: string;
 }
 
@@ -67,6 +68,7 @@ export default function EventsPage() {
           venue,
           status_id,
           publish_at,
+          allow_guest,
           created_at,
           status:event_statuses(id, name)
         `)
@@ -142,6 +144,12 @@ export default function EventsPage() {
     } catch (error: any) {
       alert('削除に失敗しました: ' + error.message);
     }
+  };
+
+  const handleCopyUrl = (eventId: string) => {
+    const url = `${window.location.origin}/apply/${eventId}`;
+    navigator.clipboard.writeText(url);
+    alert('URLをコピーしました');
   };
 
   return (
@@ -269,6 +277,15 @@ export default function EventsPage() {
                         >
                           申込み
                         </Link>
+                        {event.allow_guest && (
+                          <button
+                            onClick={() => handleCopyUrl(event.id)}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="外部申込みURLをコピー"
+                          >
+                            URL
+                          </button>
+                        )}
                         <button
                           onClick={() => handleDelete(event.id, event.title)}
                           className="text-gray-600 hover:text-gray-900"
