@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -27,7 +27,15 @@ export default function Header({ title, showBack = true }: HeaderProps) {
             <View style={styles.placeholder} />
           </>
         ) : (
-          <Text style={styles.title}>{title}</Text>
+          <>
+            <Image
+              source={require('../assets/new_logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <Text style={[styles.title, styles.titleWithLogo]}>{title}</Text>
+            <View style={[styles.placeholder, styles.placeholderWithLogo]} />
+          </>
         )}
       </View>
     </SafeAreaView>
@@ -48,6 +56,10 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     minHeight: 56,
   },
+  logo: {
+    width: 80,
+    height: 32,
+  },
   backButton: {
     padding: 4,
   },
@@ -58,8 +70,17 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
   },
+  titleWithLogo: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+  },
   placeholder: {
     width: 32,
+  },
+  placeholderWithLogo: {
+    width: 80,
   },
 });
 

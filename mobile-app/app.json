@@ -9,7 +9,7 @@
     "newArchEnabled": true,
     "scheme": "ceoclub",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/new_logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#243266"
     },

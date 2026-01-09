@@ -13,6 +13,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { supabase } from '../../../lib/supabase';
 import { Event, EventApplication } from '../../../types';
 import { useAuthStore } from '../../../stores/authStore';
+import * as Crypto from 'expo-crypto';
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -83,9 +84,13 @@ export default function EventDetailScreen() {
     try {
       setApplying(true);
 
+      // UUIDを生成
+      const uuid = await Crypto.randomUUID();
+
       const { data, error: applyError } = await supabase
         .from('event_applications')
         .insert({
+          id: uuid,
           event_id: event.id,
           user_id: user.id,
           status: 'applied',
