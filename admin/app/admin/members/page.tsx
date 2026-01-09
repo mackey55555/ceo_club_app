@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import AdminLayout from '@/components/AdminLayout';
 
 interface User {
   id: string;
@@ -127,38 +128,25 @@ export default function MembersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow" style={{ backgroundColor: '#243266' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/admin"
-                className="text-white hover:text-gray-200"
-              >
-                ← ダッシュボード
-              </Link>
-              <h1 className="text-2xl font-bold text-white">会員管理</h1>
-            </div>
-            <div className="flex gap-4">
-              <Link
-                href="/admin/members/pending"
-                className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-              >
-                承認待ち一覧
-              </Link>
-              <Link
-                href="/admin/members/new"
-                className="px-4 py-2 bg-white text-gray-800 rounded hover:bg-gray-100"
-              >
-                新規作成
-              </Link>
-            </div>
+    <AdminLayout>
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex gap-4">
+            <Link
+              href="/admin/members/pending"
+              className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+            >
+              承認待ち一覧
+            </Link>
+            <Link
+              href="/admin/members/new"
+              className="px-4 py-2 text-white rounded hover:opacity-90"
+              style={{ backgroundColor: '#243266' }}
+            >
+              新規作成
+            </Link>
           </div>
         </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 検索・フィルター */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -273,8 +261,8 @@ export default function MembersPage() {
             </table>
           )}
         </div>
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }
 
