@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import AdminLayout from '@/components/AdminLayout';
 
 interface MemberApplication {
   id: string;
@@ -202,39 +203,31 @@ export default function EventApplicationsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div>読み込み中...</div>
-      </div>
+      <AdminLayout>
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="text-center">読み込み中...</div>
+          </div>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow" style={{ backgroundColor: '#243266' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <Link
-                href={`/admin/events/${eventId}`}
-                className="text-white hover:text-gray-200"
-              >
-                ← イベント詳細
-              </Link>
-              <h1 className="text-2xl font-bold text-white">
-                申込み一覧: {event?.title}
-              </h1>
-            </div>
-            <button
-              onClick={exportToCSV}
-              className="px-4 py-2 bg-white text-gray-800 rounded hover:bg-gray-100"
-            >
-              CSVエクスポート
-            </button>
-          </div>
+    <AdminLayout>
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-gray-900">
+            申込み一覧: {event?.title}
+          </h2>
+          <button
+            onClick={exportToCSV}
+            className="px-4 py-2 text-white rounded hover:opacity-90"
+            style={{ backgroundColor: '#243266' }}
+          >
+            CSVエクスポート
+          </button>
         </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* タブ */}
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="border-b border-gray-200">
@@ -422,8 +415,8 @@ export default function EventApplicationsPage() {
             )}
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }
 

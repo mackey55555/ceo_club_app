@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import RichTextEditor from '@/components/RichTextEditor';
 import ImageUpload from '@/components/ImageUpload';
+import AdminLayout from '@/components/AdminLayout';
 
 export default function NewEventPage() {
   const router = useRouter();
@@ -153,24 +154,8 @@ export default function NewEventPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow" style={{ backgroundColor: '#243266' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/admin/events"
-                className="text-white hover:text-gray-200"
-              >
-                ← イベント一覧
-              </Link>
-              <h1 className="text-2xl font-bold text-white">新規イベント作成</h1>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <AdminLayout>
+      <div className="max-w-7xl mx-auto">
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* 左側: 編集フォーム */}
@@ -486,8 +471,8 @@ export default function NewEventPage() {
             </div>
           </div>
         </form>
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }
 

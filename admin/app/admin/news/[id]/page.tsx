@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import RichTextEditor from '@/components/RichTextEditor';
 import ImageUpload from '@/components/ImageUpload';
+import AdminLayout from '@/components/AdminLayout';
 
 interface News {
   id: string;
@@ -204,57 +205,52 @@ export default function NewsDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div>読み込み中...</div>
-      </div>
+      <AdminLayout>
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="text-center">読み込み中...</div>
+          </div>
+        </div>
+      </AdminLayout>
     );
   }
 
   if (!isNew && !news) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div>お知らせが見つかりませんでした</div>
-      </div>
+      <AdminLayout>
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="text-center text-gray-500">
+              お知らせが見つかりませんでした
+            </div>
+          </div>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow" style={{ backgroundColor: '#243266' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/admin/news"
-                className="text-white hover:text-gray-200"
+    <AdminLayout>
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-end mb-6">
+          {!isNew && !editMode && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => setEditMode(true)}
+                className="px-4 py-2 text-white rounded hover:opacity-90"
+                style={{ backgroundColor: '#243266' }}
               >
-                ← お知らせ一覧
-              </Link>
-              <h1 className="text-2xl font-bold text-white">
-                {isNew ? '新規お知らせ作成' : 'お知らせ詳細'}
-              </h1>
+                編集
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+              >
+                削除
+              </button>
             </div>
-            {!isNew && !editMode && (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setEditMode(true)}
-                  className="px-4 py-2 bg-white text-gray-800 rounded hover:bg-gray-100"
-                >
-                  編集
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-                >
-                  削除
-                </button>
-              </div>
-            )}
-          </div>
+          )}
         </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {editMode ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* 左側: 編集フォーム */}
@@ -496,7 +492,7 @@ export default function NewsDetailPage() {
             </div>
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }

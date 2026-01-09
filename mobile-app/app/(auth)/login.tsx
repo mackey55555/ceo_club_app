@@ -31,7 +31,26 @@ export default function LoginScreen() {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        // エラーメッセージを日本語化
+        if (error.message.includes('Email not confirmed') || error.message.includes('email_not_confirmed')) {
+          Alert.alert(
+            'ログインエラー',
+            'メールアドレスの確認が完了していません。\n\n管理者が作成したアカウントの場合は、Supabaseダッシュボードでメール確認を完了させてください。',
+            [{ text: 'OK' }]
+          );
+          return;
+        }
+        if (error.message.includes('Invalid login credentials') || error.message.includes('invalid_credentials')) {
+          Alert.alert(
+            'ログインエラー',
+            'メールアドレスまたはパスワードが正しくありません。\n\n会員登録申請を行っていない場合は、まず新規登録を行ってください。',
+            [{ text: 'OK' }]
+          );
+          return;
+        }
+        throw error;
+      }
 
       // ユーザー情報を取得
       const { data: userData, error: userError } = await supabase

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import AdminLayout from '@/components/AdminLayout';
 
 interface User {
   id: string;
@@ -264,47 +265,44 @@ export default function MemberDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div>読み込み中...</div>
-      </div>
+      <AdminLayout>
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="text-center">読み込み中...</div>
+          </div>
+        </div>
+      </AdminLayout>
     );
   }
 
   if (!member) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div>会員が見つかりませんでした</div>
-      </div>
+      <AdminLayout>
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="text-center text-gray-500">
+              会員が見つかりませんでした
+            </div>
+          </div>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow" style={{ backgroundColor: '#243266' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/admin/members"
-                className="text-white hover:text-gray-200"
-              >
-                ← 会員一覧
-              </Link>
-              <h1 className="text-2xl font-bold text-white">会員詳細</h1>
-            </div>
-            {!editMode && (
-              <button
-                onClick={() => setEditMode(true)}
-                className="px-4 py-2 bg-white text-gray-800 rounded hover:bg-gray-100"
-              >
-                編集
-              </button>
-            )}
-          </div>
+    <AdminLayout>
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-end mb-6">
+          {!editMode && (
+            <button
+              onClick={() => setEditMode(true)}
+              className="px-4 py-2 text-white rounded hover:opacity-90"
+              style={{ backgroundColor: '#243266' }}
+            >
+              編集
+            </button>
+          )}
         </div>
-      </header>
-
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow p-6">
           {/* 基本情報 */}
           <div className="mb-6">
@@ -544,8 +542,8 @@ export default function MemberDetailPage() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }
 

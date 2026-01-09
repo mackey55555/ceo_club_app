@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import AdminLayout from '@/components/AdminLayout';
 
 interface User {
   id: string;
@@ -78,24 +79,8 @@ export default function PendingMembersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow" style={{ backgroundColor: '#243266' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/admin/members"
-                className="text-white hover:text-gray-200"
-              >
-                ← 会員一覧
-              </Link>
-              <h1 className="text-2xl font-bold text-white">承認待ち会員</h1>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <AdminLayout>
+      <div className="max-w-7xl mx-auto">
         {/* 検索 */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <div>
@@ -176,8 +161,8 @@ export default function PendingMembersPage() {
             </table>
           )}
         </div>
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }
 
