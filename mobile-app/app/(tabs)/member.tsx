@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { useAuthStore } from '../../stores/authStore';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function MemberScreen() {
   const { user, signOut } = useAuthStore();
@@ -11,11 +12,61 @@ export default function MemberScreen() {
     router.replace('/(auth)/login');
   };
 
+  // 会員番号を生成（IDの最初の8文字を使用）
+  const memberId = user?.id ? user.id.substring(0, 8).toUpperCase() : '';
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
         {user && (
           <>
+            {/* 会員証カード */}
+            <View style={styles.memberCard}>
+              <View style={styles.memberCardHeader}>
+                <View style={styles.memberCardLogo}>
+                  <Text style={styles.memberCardLogoText}>CEO</Text>
+                  <Text style={styles.memberCardLogoSubText}>CLUB</Text>
+                </View>
+                <View style={styles.memberCardBadge}>
+                  <Text style={styles.memberCardBadgeText}>会員証</Text>
+                </View>
+              </View>
+              
+              <View style={styles.memberCardBody}>
+                <View style={styles.memberCardProfile}>
+                  {user.profile_image_url ? (
+                    <Image
+                      source={{ uri: user.profile_image_url }}
+                      style={styles.profileImage}
+                    />
+                  ) : (
+                    <View style={styles.profileImagePlaceholder}>
+                      <Ionicons name="person" size={40} color="#243266" />
+                    </View>
+                  )}
+                </View>
+                
+                <View style={styles.memberCardInfo}>
+                  <Text style={styles.memberCardName}>{user.full_name}</Text>
+                  {user.company_name && (
+                    <Text style={styles.memberCardCompany}>{user.company_name}</Text>
+                  )}
+                  <View style={styles.memberCardIdContainer}>
+                    <Text style={styles.memberCardIdLabel}>会員番号</Text>
+                    <Text style={styles.memberCardId}>{memberId}</Text>
+                  </View>
+                </View>
+              </View>
+              
+              <View style={styles.memberCardFooter}>
+                <View style={styles.memberCardFooterLine} />
+                <Text style={styles.memberCardFooterText}>
+                  CEO倶楽部 会員証
+                </Text>
+              </View>
+            </View>
+
+            {/* プロフィール情報 */}
             <View style={styles.profileSection}>
               <Text style={styles.label}>氏名</Text>
               <Text style={styles.value}>{user.full_name}</Text>
@@ -52,12 +103,138 @@ export default function MemberScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f5f5',
   },
   content: {
     flex: 1,
     padding: 20,
   },
+  // 会員証カード
+  memberCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  memberCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 2,
+    borderBottomColor: '#243266',
+  },
+  memberCardLogo: {
+    alignItems: 'flex-start',
+  },
+  memberCardLogoText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#243266',
+    letterSpacing: 2,
+  },
+  memberCardLogoSubText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#a8895b',
+    letterSpacing: 1,
+    marginTop: -4,
+  },
+  memberCardBadge: {
+    backgroundColor: '#243266',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  memberCardBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  memberCardBody: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  memberCardProfile: {
+    marginRight: 16,
+  },
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 3,
+    borderColor: '#243266',
+  },
+  profileImagePlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#f0f0f0',
+    borderWidth: 3,
+    borderColor: '#243266',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  memberCardInfo: {
+    flex: 1,
+  },
+  memberCardName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  memberCardCompany: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
+  },
+  memberCardIdContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  memberCardIdLabel: {
+    fontSize: 12,
+    color: '#999',
+    marginRight: 8,
+  },
+  memberCardId: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#243266',
+    letterSpacing: 1,
+  },
+  memberCardFooter: {
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    alignItems: 'center',
+  },
+  memberCardFooterLine: {
+    width: 40,
+    height: 2,
+    backgroundColor: '#a8895b',
+    marginBottom: 8,
+  },
+  memberCardFooterText: {
+    fontSize: 10,
+    color: '#999',
+    letterSpacing: 1,
+  },
+  // プロフィール情報
   profileSection: {
     marginBottom: 24,
     paddingBottom: 16,
