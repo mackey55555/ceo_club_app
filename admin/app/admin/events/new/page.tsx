@@ -372,8 +372,6 @@ export default function NewEventPage() {
                     }
                     bucketName="thumbnails"
                     folder="events"
-                    bucketName="thumbnails"
-                    folder="events"
                   />
                 </div>
 
