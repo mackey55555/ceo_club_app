@@ -176,8 +176,7 @@ export default function GuestApplyPage() {
                 name="full_name"
                 type="text"
                 required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 text-gray-900 bg-white placeholder:text-gray-500"
-                style={{ focusRingColor: '#243266' }}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2 text-gray-900 bg-white placeholder:text-gray-500"
                 value={formData.full_name}
                 onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
               />
@@ -191,8 +190,7 @@ export default function GuestApplyPage() {
                 name="email"
                 type="email"
                 required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 text-gray-900 bg-white placeholder:text-gray-500"
-                style={{ focusRingColor: '#243266' }}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2 text-gray-900 bg-white placeholder:text-gray-500"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
@@ -205,8 +203,7 @@ export default function GuestApplyPage() {
                 id="company_name"
                 name="company_name"
                 type="text"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 text-gray-900 bg-white placeholder:text-gray-500"
-                style={{ focusRingColor: '#243266' }}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2 text-gray-900 bg-white placeholder:text-gray-500"
                 value={formData.company_name}
                 onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
               />
@@ -219,8 +216,7 @@ export default function GuestApplyPage() {
                 id="job_title"
                 name="job_title"
                 type="text"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 text-gray-900 bg-white placeholder:text-gray-500"
-                style={{ focusRingColor: '#243266' }}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2 text-gray-900 bg-white placeholder:text-gray-500"
                 value={formData.job_title}
                 onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
               />
@@ -231,7 +227,7 @@ export default function GuestApplyPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2 disabled:opacity-50"
               style={{ backgroundColor: '#243266' }}
             >
               {submitting ? '送信中...' : '申し込む'}
@@ -242,5 +238,6 @@ export default function GuestApplyPage() {
     </div>
   );
 }
+
 
 

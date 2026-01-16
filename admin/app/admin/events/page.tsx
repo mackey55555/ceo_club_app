@@ -176,8 +176,7 @@ export default function EventsPage() {
                 placeholder="タイトルで検索"
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                style={{ focusRingColor: '#243266' }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2"
               />
             </div>
             <div>
@@ -187,8 +186,7 @@ export default function EventsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-offset-2"
-                style={{ focusRingColor: '#243266' }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2"
               >
                 <option value="all">すべて</option>
                 {statuses.map((status) => (

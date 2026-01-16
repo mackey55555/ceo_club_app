@@ -129,8 +129,7 @@ export default function TagDetailPage() {
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                style={{ focusRingColor: '#243266' }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2"
                 required
               />
             </div>
@@ -145,8 +144,7 @@ export default function TagDetailPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, sort_order: parseInt(e.target.value, 10) || 0 })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                style={{ focusRingColor: '#243266' }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2"
               />
             </div>
 
@@ -187,4 +185,5 @@ export default function TagDetailPage() {
     </AdminLayout>
   );
 }
+
 

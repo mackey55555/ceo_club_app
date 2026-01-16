@@ -165,8 +165,7 @@ export default function NewNewsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                    style={{ focusRingColor: '#243266' }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2"
                   />
                 </div>
 
@@ -214,8 +213,7 @@ export default function NewNewsPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, status_id: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-offset-2"
-                      style={{ focusRingColor: '#243266' }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2"
                     >
                       {statuses.map((status) => (
                         <option key={status.id} value={status.id}>
@@ -235,8 +233,7 @@ export default function NewNewsPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, publish_at: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-offset-2"
-                      style={{ focusRingColor: '#243266' }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2"
                     />
                   </div>
                 </div>

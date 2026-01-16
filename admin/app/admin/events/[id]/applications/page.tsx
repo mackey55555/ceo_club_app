@@ -627,8 +627,7 @@ export default function EventApplicationsPage() {
                       setSearchMemberKeyword(e.target.value);
                       fetchMembers();
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                    style={{ focusRingColor: '#243266' }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2"
                   />
                 </div>
               </div>

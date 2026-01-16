@@ -460,8 +460,7 @@ export default function EventDetailPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                    style={{ focusRingColor: '#243266' }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2"
                   />
                 </div>
 
@@ -511,8 +510,7 @@ export default function EventDetailPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, event_date: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-offset-2"
-                    style={{ focusRingColor: '#243266' }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2"
                   />
                 </div>
 
@@ -526,8 +524,7 @@ export default function EventDetailPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, venue: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                    style={{ focusRingColor: '#243266' }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2"
                   />
                 </div>
               </div>
@@ -543,8 +540,7 @@ export default function EventDetailPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, start_time: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-offset-2"
-                    style={{ focusRingColor: '#243266' }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2"
                   />
                 </div>
 
@@ -558,8 +554,7 @@ export default function EventDetailPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, end_time: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-offset-2"
-                    style={{ focusRingColor: '#243266' }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2"
                   />
                 </div>
               </div>
@@ -577,8 +572,7 @@ export default function EventDetailPage() {
                       setFormData({ ...formData, capacity: e.target.value })
                     }
                     placeholder="空欄で無制限"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                    style={{ focusRingColor: '#243266' }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2"
                   />
                 </div>
 
@@ -592,8 +586,7 @@ export default function EventDetailPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, cancel_deadline: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-offset-2"
-                    style={{ focusRingColor: '#243266' }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2"
                   />
                 </div>
               </div>
@@ -608,8 +601,7 @@ export default function EventDetailPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, status_id: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-offset-2"
-                    style={{ focusRingColor: '#243266' }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2"
                   >
                     {statuses.map((status) => (
                       <option key={status.id} value={status.id}>
@@ -629,8 +621,7 @@ export default function EventDetailPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, publish_at: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-offset-2"
-                    style={{ focusRingColor: '#243266' }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2"
                   />
                 </div>
               </div>
@@ -644,7 +635,6 @@ export default function EventDetailPage() {
                       setFormData({ ...formData, allow_guest: e.target.checked })
                     }
                     className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-2"
-                    style={{ focusRingColor: '#243266' }}
                   />
                   <span className="text-sm font-medium text-gray-700">
                     非会員申込み許可
@@ -673,7 +663,6 @@ export default function EventDetailPage() {
                           }
                         }}
                         className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-2"
-                        style={{ focusRingColor: '#243266' }}
                       />
                       <span className="text-sm text-gray-700">{tag.name}</span>
                     </label>
@@ -686,8 +675,7 @@ export default function EventDetailPage() {
                       value={newTagName}
                       onChange={(e) => setNewTagName(e.target.value)}
                       placeholder="新しいタグ名"
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                      style={{ focusRingColor: '#243266' }}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#243266] focus:ring-offset-2"
                       onKeyPress={(e) => {
                         if (e.key === 'Enter') {
                           handleCreateTag();
