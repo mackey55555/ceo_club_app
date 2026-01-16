@@ -81,9 +81,6 @@ export default function NewMemberPage() {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
-        options: {
-          email_redirect_to: undefined,
-        },
       });
 
       if (authError) throw authError;
@@ -91,6 +88,8 @@ export default function NewMemberPage() {
       if (!authData.user) {
         throw new Error('ユーザー作成に失敗しました');
       }
+
+      const userId = authData.user.id;
 
       // usersテーブルに会員情報を追加（トリガーで自動的に作成される可能性があるため、更新する）
       const { error: userError } = await supabase
@@ -104,12 +103,12 @@ export default function NewMemberPage() {
           status_id: formData.status_id,
           terms_agreed: true,
         })
-        .eq('id', authData.user.id);
+        .eq('id', userId);
 
       // 更新に失敗した場合は、新規作成を試みる
       if (userError) {
         const { error: insertError } = await supabase.from('users').insert({
-          id: authData.user.id,
+          id: userId,
           email: formData.email,
           full_name: formData.full_name,
           company_name: formData.company_name || null,
@@ -126,7 +125,7 @@ export default function NewMemberPage() {
       // サークルを追加
       if (selectedCircles.length > 0) {
         const circleInserts = selectedCircles.map((circleId) => ({
-          user_id: authData.user.id,
+          user_id: userId,
           circle_id: circleId,
         }));
 

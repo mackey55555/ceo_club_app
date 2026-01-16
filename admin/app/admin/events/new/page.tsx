@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -8,7 +8,7 @@ import RichTextEditor from '@/components/RichTextEditor';
 import ImageUpload from '@/components/ImageUpload';
 import AdminLayout from '@/components/AdminLayout';
 
-export default function NewEventPage() {
+function NewEventPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const copyFromId = searchParams.get('copyFrom');
@@ -666,6 +666,22 @@ export default function NewEventPage() {
         </form>
       </div>
     </AdminLayout>
+  );
+}
+
+export default function NewEventPage() {
+  return (
+    <Suspense fallback={
+      <AdminLayout>
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="text-center">読み込み中...</div>
+          </div>
+        </div>
+      </AdminLayout>
+    }>
+      <NewEventPageContent />
+    </Suspense>
   );
 }
 
