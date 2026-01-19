@@ -43,6 +43,34 @@ eas build:configure
 
 ---
 
+## 超重要：環境変数（Supabase）
+
+このアプリは `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` を使います。  
+ローカル（`npm start`）で動いても、EAS Build側に環境変数が無いと **Ad Hocアプリが起動直後に落ちる**ことがあります。
+
+### どの環境に入れる？
+
+`eas build --profile adhoc` は、ログに `Resolved "preview" environment` と出る通り **preview環境**を使います。  
+なので **preview環境**に設定してください。
+
+### 設定コマンド（推奨）
+
+`<...>` をあなたのSupabase値に置き換えて実行：
+
+```bash
+cd mobile-app
+eas env:create --environment preview --visibility plaintext --name EXPO_PUBLIC_SUPABASE_URL --value "<SUPABASE_URL>"
+eas env:create --environment preview --visibility sensitive --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "<SUPABASE_ANON_KEY>"
+```
+
+確認：
+
+```bash
+eas env:list --environment preview
+```
+
+---
+
 ## Apple Developerアカウントの設定
 
 ### 1. Apple Developerアカウントの取得
