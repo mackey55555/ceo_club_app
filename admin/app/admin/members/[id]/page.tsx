@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
 import AdminLayout from '@/components/AdminLayout';
 
 interface User {
@@ -32,7 +31,7 @@ interface User {
 export default function MemberDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const memberId = params.id as string;
+  const memberId = (params?.id as string | undefined) || '';
 
   const [member, setMember] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,6 +60,11 @@ export default function MemberDetailPage() {
       return;
     }
 
+    if (!memberId || memberId === 'undefined') {
+      // ルーティングがまだ確定していない場合は何もしない
+      return;
+    }
+
     fetchStatuses();
     fetchCircles();
     fetchMember();
@@ -68,13 +72,15 @@ export default function MemberDetailPage() {
 
   const fetchStatuses = async () => {
     try {
-      const { data, error } = await supabase
-        .from('member_statuses')
-        .select('id, name')
-        .order('name');
-
-      if (error) throw error;
-      setStatuses(data || []);
+      const session = localStorage.getItem('admin_session');
+      const res = await fetch('/api/admin/member-statuses', {
+        headers: {
+          'x-admin-session': session ? btoa(unescape(encodeURIComponent(session))) : '',
+        },
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'ステータス取得に失敗しました');
+      setStatuses((json.statuses || []).map((s: any) => ({ id: s.id, name: s.name })));
     } catch (error) {
       console.error('Error fetching statuses:', error);
     }
@@ -82,14 +88,15 @@ export default function MemberDetailPage() {
 
   const fetchCircles = async () => {
     try {
-      const { data, error } = await supabase
-        .from('circles')
-        .select('id, name')
-        .eq('is_active', true)
-        .order('sort_order');
-
-      if (error) throw error;
-      setCircles(data || []);
+      const session = localStorage.getItem('admin_session');
+      const res = await fetch('/api/admin/circles', {
+        headers: {
+          'x-admin-session': session ? btoa(unescape(encodeURIComponent(session))) : '',
+        },
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'サークル取得に失敗しました');
+      setCircles((json.circles || []).map((c: any) => ({ id: c.id, name: c.name })));
     } catch (error) {
       console.error('Error fetching circles:', error);
     }
@@ -98,37 +105,20 @@ export default function MemberDetailPage() {
   const fetchMember = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('users')
-        .select(`
-          *,
-          status:member_statuses(id, name, description),
-          user_circles(
-            circle:circles(id, name)
-          )
-        `)
-        .eq('id', memberId)
-        .single();
-
-      if (error) throw error;
-
-      const memberData = data as any;
-      
-      // 所属サークルを取得
-      let circlesData: { id: string; name: string }[] = [];
-      if (memberData.user_circles && memberData.user_circles.length > 0) {
-        circlesData = memberData.user_circles
-          .map((uc: any) => uc.circle)
-          .filter((circle: any) => circle);
-        const circleIds = circlesData.map((circle) => circle.id);
-        setSelectedCircles(circleIds);
-      }
-      
-      setMember({
-        ...memberData,
-        circles: circlesData,
+      const session = localStorage.getItem('admin_session');
+      const res = await fetch(`/api/admin/members/${memberId}`, {
+        headers: {
+          'x-admin-session': session ? btoa(unescape(encodeURIComponent(session))) : '',
+        },
       });
-      
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || '会員取得に失敗しました');
+
+      const memberData = json.member as any;
+      const circlesData: { id: string; name: string }[] = memberData.circles || [];
+      setSelectedCircles(circlesData.map((c) => c.id));
+
+      setMember(memberData);
       setFormData({
         full_name: memberData.full_name || '',
         email: memberData.email || '',
@@ -152,12 +142,17 @@ export default function MemberDetailPage() {
       setSaving(true);
       const activeStatusId = '00000000-0000-0000-0000-000000000002'; // active
 
-      const { error } = await supabase
-        .from('users')
-        .update({ status_id: activeStatusId })
-        .eq('id', memberId);
-
-      if (error) throw error;
+      const session = localStorage.getItem('admin_session');
+      const res = await fetch(`/api/admin/members/${memberId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-session': session ? btoa(unescape(encodeURIComponent(session))) : '',
+        },
+        body: JSON.stringify({ status_id: activeStatusId }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || '承認に失敗しました');
 
       alert('会員を承認しました');
       fetchMember();
@@ -175,12 +170,17 @@ export default function MemberDetailPage() {
       setSaving(true);
       const rejectedStatusId = '00000000-0000-0000-0000-000000000004'; // rejected
 
-      const { error } = await supabase
-        .from('users')
-        .update({ status_id: rejectedStatusId })
-        .eq('id', memberId);
-
-      if (error) throw error;
+      const session = localStorage.getItem('admin_session');
+      const res = await fetch(`/api/admin/members/${memberId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-session': session ? btoa(unescape(encodeURIComponent(session))) : '',
+        },
+        body: JSON.stringify({ status_id: rejectedStatusId }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || '却下に失敗しました');
 
       alert('会員を却下しました');
       fetchMember();
@@ -195,42 +195,25 @@ export default function MemberDetailPage() {
     try {
       setSaving(true);
 
-      const updateData: any = {
-        full_name: formData.full_name,
-        company_name: formData.company_name || null,
-        district: formData.district || null,
-        gender: formData.gender || null,
-        birth_date: formData.birth_date || null,
-        status_id: formData.status_id,
-      };
-
-      const { error } = await supabase
-        .from('users')
-        .update(updateData)
-        .eq('id', memberId);
-
-      if (error) throw error;
-
-      // サークルを更新
-      // 既存のサークルを削除
-      await supabase
-        .from('user_circles')
-        .delete()
-        .eq('user_id', memberId);
-
-      // 新しいサークルを追加
-      if (selectedCircles.length > 0) {
-        const circleInserts = selectedCircles.map((circleId) => ({
-          user_id: memberId,
-          circle_id: circleId,
-        }));
-
-        const { error: circleError } = await supabase
-          .from('user_circles')
-          .insert(circleInserts);
-
-        if (circleError) throw circleError;
-      }
+      const session = localStorage.getItem('admin_session');
+      const res = await fetch(`/api/admin/members/${memberId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-session': session ? btoa(unescape(encodeURIComponent(session))) : '',
+        },
+        body: JSON.stringify({
+          full_name: formData.full_name,
+          company_name: formData.company_name || null,
+          district: formData.district || null,
+          gender: formData.gender || null,
+          birth_date: formData.birth_date || null,
+          status_id: formData.status_id,
+          circle_ids: selectedCircles,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || '保存に失敗しました');
 
       alert('保存しました');
       setEditMode(false);

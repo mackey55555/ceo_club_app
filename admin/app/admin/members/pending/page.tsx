@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
 import AdminLayout from '@/components/AdminLayout';
 
 interface User {
@@ -41,31 +40,19 @@ export default function PendingMembersPage() {
       setLoading(true);
       const pendingStatusId = '00000000-0000-0000-0000-000000000001'; // pending
 
-      let query = supabase
-        .from('users')
-        .select(`
-          id,
-          email,
-          full_name,
-          company_name,
-          status_id,
-          created_at,
-          status:member_statuses(id, name, description)
-        `)
-        .eq('status_id', pendingStatusId)
-        .order('created_at', { ascending: false });
+      const session = localStorage.getItem('admin_session');
+      const params = new URLSearchParams();
+      params.set('statusId', pendingStatusId);
+      if (searchKeyword.trim()) params.set('keyword', searchKeyword.trim());
 
-      // 検索キーワード
-      if (searchKeyword.trim()) {
-        query = query.or(
-          `email.ilike.%${searchKeyword}%,full_name.ilike.%${searchKeyword}%,company_name.ilike.%${searchKeyword}%`
-        );
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      setMembers((data as any) || []);
+      const res = await fetch(`/api/admin/members?${params.toString()}`, {
+        headers: {
+          'x-admin-session': session ? btoa(unescape(encodeURIComponent(session))) : '',
+        },
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || '会員取得に失敗しました');
+      setMembers((json.members as any) || []);
     } catch (error) {
       console.error('Error fetching pending members:', error);
     } finally {

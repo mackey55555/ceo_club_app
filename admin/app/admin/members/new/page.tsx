@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
 import AdminLayout from '@/components/AdminLayout';
 
 export default function NewMemberPage() {
@@ -37,13 +36,15 @@ export default function NewMemberPage() {
 
   const fetchStatuses = async () => {
     try {
-      const { data, error } = await supabase
-        .from('member_statuses')
-        .select('id, name')
-        .order('name');
-
-      if (error) throw error;
-      setStatuses(data || []);
+      const session = localStorage.getItem('admin_session');
+      const res = await fetch('/api/admin/member-statuses', {
+        headers: {
+          'x-admin-session': session ? btoa(unescape(encodeURIComponent(session))) : '',
+        },
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'ステータス取得に失敗しました');
+      setStatuses((json.statuses || []).map((s: any) => ({ id: s.id, name: s.name })));
     } catch (error) {
       console.error('Error fetching statuses:', error);
     }
@@ -51,14 +52,15 @@ export default function NewMemberPage() {
 
   const fetchCircles = async () => {
     try {
-      const { data, error } = await supabase
-        .from('circles')
-        .select('id, name')
-        .eq('is_active', true)
-        .order('sort_order');
-
-      if (error) throw error;
-      setCircles(data || []);
+      const session = localStorage.getItem('admin_session');
+      const res = await fetch('/api/admin/circles', {
+        headers: {
+          'x-admin-session': session ? btoa(unescape(encodeURIComponent(session))) : '',
+        },
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'サークル取得に失敗しました');
+      setCircles((json.circles || []).map((c: any) => ({ id: c.id, name: c.name })));
     } catch (error) {
       console.error('Error fetching circles:', error);
     }
@@ -75,69 +77,30 @@ export default function NewMemberPage() {
     try {
       setSaving(true);
 
-      // Supabase Authでユーザーを作成（通常のsignUpを使用）
-      // 注意: 実際の実装では、サービスロールキーを使用するか、
-      // またはEdge Function経由でユーザーを作成することを推奨します
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-      });
-
-      if (authError) throw authError;
-
-      if (!authData.user) {
-        throw new Error('ユーザー作成に失敗しました');
-      }
-
-      const userId = authData.user.id;
-
-      // usersテーブルに会員情報を追加（トリガーで自動的に作成される可能性があるため、更新する）
-      const { error: userError } = await supabase
-        .from('users')
-        .update({
-          full_name: formData.full_name,
-          company_name: formData.company_name || null,
-          district: formData.district || null,
-          gender: formData.gender || null,
-          birth_date: formData.birth_date || null,
-          status_id: formData.status_id,
-          terms_agreed: true,
-        })
-        .eq('id', userId);
-
-      // 更新に失敗した場合は、新規作成を試みる
-      if (userError) {
-        const { error: insertError } = await supabase.from('users').insert({
-          id: userId,
+      const session = localStorage.getItem('admin_session');
+      const res = await fetch('/api/admin/members/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-session': session ? btoa(unescape(encodeURIComponent(session))) : '',
+        },
+        body: JSON.stringify({
           email: formData.email,
+          password: formData.password,
           full_name: formData.full_name,
-          company_name: formData.company_name || null,
-          district: formData.district || null,
-          gender: formData.gender || null,
-          birth_date: formData.birth_date || null,
+          company_name: formData.company_name || undefined,
+          district: formData.district || undefined,
+          gender: formData.gender || undefined,
+          birth_date: formData.birth_date || undefined,
           status_id: formData.status_id,
-          terms_agreed: true,
-        });
-
-        if (insertError) throw insertError;
-      }
-
-      // サークルを追加
-      if (selectedCircles.length > 0) {
-        const circleInserts = selectedCircles.map((circleId) => ({
-          user_id: userId,
-          circle_id: circleId,
-        }));
-
-        const { error: circleError } = await supabase
-          .from('user_circles')
-          .insert(circleInserts);
-
-        if (circleError) throw circleError;
-      }
+          circle_ids: selectedCircles,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || '会員作成に失敗しました');
 
       alert('会員を作成しました');
-      router.push(`/admin/members/${authData.user.id}`);
+      router.push(`/admin/members/${json.id}`);
     } catch (error: any) {
       console.error('Error creating member:', error);
       alert('会員作成に失敗しました: ' + error.message);

@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
 import AdminLayout from '@/components/AdminLayout';
 
 interface User {
@@ -44,13 +43,15 @@ export default function MembersPage() {
 
   const fetchStatuses = async () => {
     try {
-      const { data, error } = await supabase
-        .from('member_statuses')
-        .select('id, name')
-        .order('name');
-
-      if (error) throw error;
-      setStatuses(data || []);
+      const session = localStorage.getItem('admin_session');
+      const res = await fetch('/api/admin/member-statuses', {
+        headers: {
+          'x-admin-session': session ? btoa(unescape(encodeURIComponent(session))) : '',
+        },
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'ステータス取得に失敗しました');
+      setStatuses((json.statuses || []).map((s: any) => ({ id: s.id, name: s.name })));
     } catch (error) {
       console.error('Error fetching statuses:', error);
     }
@@ -59,38 +60,19 @@ export default function MembersPage() {
   const fetchMembers = async () => {
     try {
       setLoading(true);
-      let query = supabase
-        .from('users')
-        .select(`
-          id,
-          email,
-          full_name,
-          company_name,
-          district,
-          gender,
-          birth_date,
-          status_id,
-          created_at,
-          status:member_statuses(id, name, description)
-        `)
-        .order('created_at', { ascending: false });
+      const session = localStorage.getItem('admin_session');
+      const params = new URLSearchParams();
+      params.set('statusId', statusFilter);
+      if (searchKeyword.trim()) params.set('keyword', searchKeyword.trim());
 
-      // ステータスフィルター
-      if (statusFilter !== 'all') {
-        query = query.eq('status_id', statusFilter);
-      }
-
-      // 検索キーワード
-      if (searchKeyword.trim()) {
-        query = query.or(
-          `email.ilike.%${searchKeyword}%,full_name.ilike.%${searchKeyword}%,company_name.ilike.%${searchKeyword}%`
-        );
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      setMembers((data as any) || []);
+      const res = await fetch(`/api/admin/members?${params.toString()}`, {
+        headers: {
+          'x-admin-session': session ? btoa(unescape(encodeURIComponent(session))) : '',
+        },
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || '会員取得に失敗しました');
+      setMembers((json.members as any) || []);
     } catch (error) {
       console.error('Error fetching members:', error);
     } finally {

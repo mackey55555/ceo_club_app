@@ -63,7 +63,21 @@ export default function RegisterScreen() {
         ]
       );
     } catch (error: any) {
-      Alert.alert('登録エラー', error.message || '登録に失敗しました');
+      const msg = String(error?.message || '');
+      const isAlreadyRegistered =
+        msg.toLowerCase().includes('already registered') ||
+        msg.includes('User already registered') ||
+        msg.includes('すでに') ||
+        msg.includes('既に');
+
+      if (isAlreadyRegistered) {
+        Alert.alert('登録できません', 'このメールアドレスは既に登録されています。ログインしてください。', [
+          { text: 'ログインへ', onPress: () => router.replace('/(auth)/login') },
+          { text: 'OK' },
+        ]);
+      } else {
+        Alert.alert('登録エラー', msg || '登録に失敗しました');
+      }
     } finally {
       setLoading(false);
     }
